@@ -18,14 +18,14 @@ and respond to them when they occur. The responsibility of gathering events
 from the operating system or monitoring other sources of events is handled by
 libuv, and the user can register callbacks to be invoked when an event occurs.
 The event-loop usually keeps running *forever*. In pseudocode:
-在基于事件的编程中，应用程序将对某些事件的发生感兴趣，并在事件发生时做出响应。
-libuv的负责从操作系统或者其它被监视的事件源收集事件，而用户则负责注册待事件发生时的回调处理函数。
+在基于事件的编程中，应用程序将对某些事件的发生表示关注，并在事件发生时做出响应。
+libuv负责从操作系统或者其它被监视的事件源收集事件，而用户则负责注册待事件发生时的回调处理函数。
 事件循环通常是持续运行的（死循环）。用伪码表示如下：
 
 .. code-block:: python
 
-    while there are still events to process:    # 只要仍有事件需要处理就：
-        e = get the next event　　　　　　　　　# 获取下一个事件
+    while there are still events to process:      # 只要仍有事件需要处理就：
+        e = get the next event                    # 获取下一个事件
         if there is a callback associated with e: # 有与这个事件相关的回调函数？
             call the callback                     # 调用这些回调函数
 
