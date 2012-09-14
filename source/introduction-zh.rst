@@ -4,7 +4,7 @@ Introduction
 
 This 'book' is a small set of tutorials about using libuv_ as
 a high performance evented I/O library which offers the same API on Windows and Unix.
-这本书由一系列的教程组成，教你如何使用libuv_, 这是一个在Windows和Unix系统上提供相同的应用编程接口(API)的，性能优良的基于事件的IO库。
+这本书由一系列的教程组成，教你如何使用 libuv_, 这是一个在Windows和Unix系统上提供相同的应用编程接口(API)的，性能优良的基于事件的IO库。
 
 
 It is meant to cover the main areas of libuv, but is not a comprehensive
