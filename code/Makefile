@@ -17,7 +17,10 @@ examples=\
 	proc-streams\
 	cgi\
 	pipe-echo-server\
-	multi-echo-server
+	multi-echo-server\
+	tty\
+	tty-gravity\
+	interfaces
 
 UV_PATH=$(shell pwd)/../libuv
 CFLAGS=-g -Wall -I$(UV_PATH)/include $(UV_PATH)/uv.a
@@ -49,9 +52,6 @@ proc-streams-example: proc-streams/test.c
 tick: cgi/tick.c
 	gcc -g -Wall -o cgi/tick cgi/tick.c
 
-wordcount: wordcount/counter.c
-	gcc -g -Wall -o wordcount/counter wordcount/counter.c
-
 multi-echo-server-worker: multi-echo-server/worker.c
 	gcc $(CFLAGS) -o multi-echo-server/worker multi-echo-server/worker.c $(UV_PATH)/uv.a
 
@@ -62,5 +62,8 @@ clean:
 	for dir in $(examples); do cd $$dir; rm -f $$dir; cd ..; done
 	rm -rf plugin/*.o plugin/libhello.*
 	rm -rf plugin/plugin
+	rm -rf proc-streams/test
+	rm -rf cgi/tick
+	rm -rf multi-echo-server/worker
 
 .PHONY: clean
