@@ -4,7 +4,7 @@ Filesystem
 
 Simple filesystem read/write is achieved using the ``uv_fs_*`` functions and the
 ``uv_fs_t`` struct.
-简单的文件系统读写操作可以通过使用 ``uv_fs_*`` 函数和 ``uv_fs_t`` 结构。
+通过uv进行简单的文件系统读写操作需要利用 ``uv_fs_*`` 族函数和 ``uv_fs_t`` 结构。
 
 .. note::
 
@@ -13,9 +13,10 @@ Simple filesystem read/write is achieved using the ``uv_fs_*`` functions and the
     by the operating system. Filesystem operations use blocking functions
     internally, but invoke these functions in a thread pool and notify watchers
     registered with the event loop when application interaction is required.
-    libuv的文件系统操作并不同于 :doc:`socket 操作<networking>` . 因为Socket操作使用了
-    由操作系统提供的非阻塞操作机制。而文件系统内部是仍是调用阻塞函数的，只是这些函数
-    是在线程池中调用的，并在应用交互需要时，事件循环会通知已经注册到事件循环上的Wathers.
+    libuv的文件系统操作并不同于Socket操作（:doc:`socket operations <networking>`). 
+    因为Socket操作使用的是由底层操作系统提供的非阻塞操作机制。而文件系统操作实现内
+    部调用的操作系统API仍然还是阻塞函数，只是这些函数是在线程池中调用的，并在应用交
+    互需要时，事件循环会通知已经注册的Wathers.
 
 .. note::
 
@@ -87,7 +88,8 @@ Filesystem operation callbacks have the signature:
 
 Let's see a simple implementation of ``cat``. We start with registering
 a callback for when the file is opened:
-让我们来实现一个简单的 ``cat``. 首先，我们为文件已打开事件注册一个回调函数，实现如下。
+有了libuv提供的这些函数，现在让我们来实现一个简单的 ``cat``吧. 
+首先，我们为文件已打开事件注册一个回调函数，实现如下。
 
 .. rubric:: uvcat/main.c - opening a file 打开文件句柄
 .. literalinclude:: ../code/uvcat/main.c
@@ -97,13 +99,14 @@ a callback for when the file is opened:
 
 The ``result`` field of a ``uv_fs_t`` is the file descriptor in case of the
 ``uv_fs_open`` callback. If the file is successfully opened, we start reading it.
-``uv_fs_open`` 回调时传入的 ``uv_fs_t`` 参数中的 ``result`` 字段是一个文件描述符。如果文件已成功打开，我们可以在该描述符上进行读取操作了。
+``uv_fs_open`` 回调时传入的 ``uv_fs_t`` 参数中的 ``result`` 字段是一个文件描述符。
+如果文件已成功打开，我们可以在该描述符上进行读取操作了。
 
 .. warning::
 
     The ``uv_fs_req_cleanup()`` function must be called to free internal memory
     allocations in libuv.
-    为了释放libuv内部的内存分配，我们必须调用``uv_fs_req_cleanup()`` 。
+    为了释放libuv内部实现时分配的内存资源，我们必须调用``uv_fs_req_cleanup()`` 。
 
 .. rubric:: uvcat/main.c - read callback 文件读回调函数
 .. literalinclude:: ../code/uvcat/main.c
@@ -113,11 +116,13 @@ The ``result`` field of a ``uv_fs_t`` is the file descriptor in case of the
 
 In the case of a read call, you should pass an *initialized* buffer which will
 be filled with data before the read callback is triggered.
-在进行文件读取操作时，你需要输入一块已初始化的缓冲区，在读回调操作被触发时，数据将保存在这块缓冲区中。
+在进行文件读取操作时，你需要输入一块已初始化的缓冲区，在读回调操作被触发之前，libuv会
+将读取到的数据保存到这块缓冲区里面。
 
 In the read callback the ``result`` field is 0 for EOF, -1 for error and the
 number of bytes read on success.
-在读回调处理时，传入的 ``result`` 字段如果是0表示读取了文件结束符(EOF)(文件已完全读入)，-1表示有错误，其它的数值表示已读入的字节数。
+在读回调函数被调用时，传入的 ``result`` 字段如果是0则表示读取了文件结束符(EOF)(文件已完全读入)，
+-1表示有错误发生了，其它的数值表示已读入的字节数。
 
 Here you see a common pattern when writing asynchronous programs. The
 ``uv_fs_close()`` call is performed synchronously. *Usually tasks which are
@@ -126,9 +131,9 @@ synchronously, since we are interested in fast I/O when the program is going
 about its primary task and dealing with multiple I/O sources*. For solo tasks
 the performance difference usually is negligible and may lead to simpler code.
 接下来你将看到异步读取操作编程的常见模式。 ``uv_fs_close()`` 以同步的方式进行调用。
-通常，对于一次性的任务或者在开始或者结束期执行的操作以同步的方式进行，因为当我们
-的程序执行主要任务或者处理多IO事件源时，我们关注的快速的IO。对于单一的任务，性能上的
-差异是可以忽略的，这将让我写出更简洁的代码。
+通常，对于只会执行一次的任务，或者作为启动和结束时期执行的操作以同步的方式进行，
+因为当我们的程序执行主要任务或者处理多IO事件源时，我们关注的快速的IO。对于单个任务
+而言，性能上的差异是可以忽略的，这样我就可以写出更加简洁的代码来。
 
 We can generalize the pattern that the actual return value of the original
 system call is stored in ``uv_fs_t.result``.
@@ -166,8 +171,9 @@ callbacks.
     Due to the way filesystems and disk drives are configured for performance,
     a write that 'succeeds' may not be committed to disk yet. See
     ``uv_fs_fsync`` for stronger guarantees.
-    由于文件系统和硬盘驱动器鉴于性能考虑而进行的配置方式，一个成功的写操作并不一定保证写入
-    磁盘了。如果需要更硬性的要求，可以参见 ``uv_fs_fsync`` 的相关内容。
+    由于文件系统和硬盘驱动器鉴于性能考虑而进行的配置方式，一个成功的写操作并不一定保证写入到
+    了磁盘（还有可能在操作系统的缓冲区内）。如果需要更强的保证，可以参见 ``uv_fs_fsync`` 的
+    相关内容。
 
 We set the dominos rolling in ``main()``:
 我们在 ``main()`` 函数中开始推倒多米诺骨牌：
@@ -186,7 +192,8 @@ supported asynchronously and have intuitive argument order. They follow the
 same patterns as the read/write/open calls, returning the result in the
 ``uv_fs_t.result`` field. The full list:
 所有的标准文件系统操作，比如 ``unlink``, ``rmdir``, ``stat`` 都是支持异步的调用方式，并
-需要注意参数顺序的细微差异。它们和文件读／写／打开调用一样，返回的结果包含在 ``uv_fs_t.result`` 字段中。下列全部的文件操作：
+具有相当自然的参数顺序。它们和文件read／write／open函数的调用方法一样，返回的结果包含也
+都保存在 ``uv_fs_t.result`` 字段中。下列全部的文件操作：
 
 .. rubric:: Filesystem operations 文件系统操作
 .. literalinclude:: ../libuv/include/uv.h
@@ -200,7 +207,8 @@ Buffers and Streams
 
 The basic I/O tool in libuv is the stream (``uv_stream_t``). TCP sockets, UDP
 sockets, and pipes for file I/O and IPC are all treated as stream subclasses.
-libuv提供了一个基本的IO工具是流(Stream, ``uv_stream_t``). TCP和UDP套接字，以及用于文件IO和IPC的管道，都被看作是流的子类。
+libuv提供了一个基本的IO工具——流(Stream, ``uv_stream_t``). 不管是TCP和UDP套接字，还是
+用于文件和IPC的管道，都被当作流的子类来处理。
 
 Streams are initialized using custom functions for each subclass, then operated
 upon using
@@ -211,7 +219,7 @@ upon using
     int uv_read_stop(uv_stream_t*);
     int uv_write(uv_write_t* req, uv_stream_t* handle,
                 uv_buf_t bufs[], int bufcnt, uv_write_cb cb);
-对于不同的子类，流使用特定的函数进行初始化，然后在上面执行这些操作，如：
+对于不同的子类，流使用特定的函数进行初始化，然后可以对其执行如下操作：
 
 .. code-block:: c
 
@@ -232,16 +240,19 @@ a collection of a pointer to bytes (``uv_buf_t.base``) and the length
 What does require management is the actual bytes, which have to be allocated
 and freed by the application.
 缓冲区—— ``uv_buf_t`` 是指数据的不连续单元。它仅包含一个指向字节数组的指针
-(``uv_buf_t.base``)和一个表示字节数组容量的长度值(``uv_buf_t.len``). 这样轻量的 ``uv_buf_t`` 是按值传递的。真正需要管理是的实际存放字节数组的内存空间，它们必须由应用负责分配和释放。
+(``uv_buf_t.base``)和一个表示字节数组容量的长度值(``uv_buf_t.len``). 这样轻量
+的 ``uv_buf_t`` 是按值传递的。真正需要管理是的实际存放字节数组的内存空间，它们
+必须由应用负责分配和释放。
 
 To demonstrate streams we will need to use ``uv_pipe_t``. This allows streaming
 local files [#]_. Here is a simple tee utility using libuv.  Doing all operations
 asynchronously shows the power of evented I/O. The two writes won't block each
 other, but we've to be careful to copy over the buffer data to ensure we don't
 free a buffer until it has been written.
-我们必须使用 ``uv_pipe_t`` 来演示流及其操作。这允许流化本地的文件 [#]_ . 下面使用libuv
-实现一个简单的tee功能。以异步的方式进行所有的操作以展示强大的基于事件的IO。两个写操作之间
-不会彼此阻塞，但我们必须小心的拷贝缓冲中的数据，确保在它们被成功写入之前不会被释放掉。
+我们必须使用 ``uv_pipe_t`` 来演示流及其操作。这允许流化本地的文件 [#]_ . 接下来我们
+利用libuv来实现一个简单的tee程序。程序将以异步的方式执行所有的操作，可以窥见强大的基
+于事件的IO。两个写操作之间不会彼此阻塞，但我们必须小心的拷贝缓冲中的数据，确保在它们
+被成功写入之前不会被释放掉。
 
 The program is to be executed as::
 
@@ -265,14 +276,14 @@ opened as bidirectional by default.
 The third argument of ``uv_pipe_init()`` should be set to 1 for IPC using named
 pipes. This is covered in :doc:`processes`. The ``uv_pipe_open()`` call
 associates the file descriptor with the file.
-为了让IPC使用命名管道， ``uv_pipe_init()`` 的第三个参数应该被设置成１. 具体内容请
+为了让IPC使用命名管道， ``uv_pipe_init()`` 的第三个参数应该设置成１. 具体内容请
 参考 :doc:`processes`. ``uv_pipe_open()`` 的调用会将文件描述符与文件关联起来。
 
 We start monitoring ``stdin``. The ``alloc_buffer`` callback is invoked as new
 buffers are required to hold incoming data. ``read_stdin`` will be called with
 these buffers.
-我们开始监视 ``stdin``. 当需要建立新的缓冲区来保存流入的数据时， ``alloc_buffer`` 回调
-函数会被调用。在 ``read_stdin`` 被调用时会输入这些缓冲区。
+我们开始监视 ``stdin``. 随着数据的输入，libuv要创建新的缓冲区来保存数据，此时，
+它会调用``alloc_buffer`` 回调函数。然后这些缓冲区又会被输入到 ``read_stdin`` 中。
 
 .. rubric:: uvtee/main.c - reading buffers 读取缓冲区
 .. literalinclude:: ../code/uvtee/main.c
@@ -282,8 +293,8 @@ these buffers.
 The standard ``malloc`` is sufficient here, but you can use any memory allocation
 scheme. For example, node.js uses its own slab allocator which associates
 buffers with V8 objects.
-这里我们使用标准的 ``malloc`` 已经足够了，但你可以使用任意一种内存分配方案。比如，
-node.js 使用它自己的 slab 分配器，来将V8虚拟机对象和缓冲区关联起来。
+在这里我们使用标准 ``malloc`` 已经足够了，但你可以使用任意一种内存分配方案。比如，
+在node.js的实现中， 他们设计了自己的 slab 分配器，来将V8虚拟机对象和缓冲区关联起来。
 
 The read callback ``nread`` parameter is -1 on any error. This error might be
 EOF, in which case we close all the streams, using the generic close function
@@ -294,7 +305,8 @@ deallocation is application responsibility, so we free the data.
 当发生错误时，读回调函数传入的 ``nread`` 参数被置为-1. 这种错误可能是读到了文件结束符
 (EOF)，在这种情况下，我们调用通用的关闭函数 ``uv_close()`` 来关闭所有的流。称之为通用
 是因为 ``uv_close()`` 可以处理所有基于libuv内部类型的句柄。
-
+如果``nread``是非负数，我们就可以将它写入到输出流中。记住，缓冲区的分配和释放是由应用
+程序负责的，因此最后我们需要释放这些数据。
 
 .. rubric:: uvtee/main.c - Write to pipe 向管道进行写操作
 .. literalinclude:: ../code/uvtee/main.c
@@ -318,7 +330,8 @@ unwrap it in the callbacks.
         signal(SIGPIPE, SIG_IGN)
 
     in the initialization stages of your application.
-    如果你的程序打算被其它的程序使用，它应该被写成一个管道。这使它容许在接到 `SIGPIPE信号时取消`_ 。好的作法是在你的程序初始化阶段插入这句::
+    如果你的程序打算被其它的程序使用，它应该被写成一个管道。这使它容许在接到 
+    `SIGPIPE信号时取消`_ 。好的作法是在你的程序初始化阶段插入这句::
       
         signal(SIGPIPE, SIG_IGN)
 
@@ -336,15 +349,16 @@ file change notification libraries [#fsnotify]_. This is one of the more
 inconsistent parts of libuv. File change notification systems are themselves
 extremely varied across platforms so getting everything working everywhere is
 difficult. 
-所有现代操作系统都提供了API用于监视单独的文件或目录，当文件遭修改时应用程序会被告知。libuv 封装了
-常用的文件修改通知库 [#fsnotify]_. 这是libuv中较不一致的一部分内容。文件修改通知系统
-在不同的平台上差异极大，因此要让所有东西在任何地方都可以工作是相当困难的。
+所有现代操作系统都提供了API用于监视单独的文件或目录，当文件遭修改时应用程序会被告知。
+libuv 封装了常用的文件修改通知库 [#fsnotify]_. 这是libuv中较不一致的一部分内容。文件
+修改通知系统在不同的平台上差异极大，因此要让所有东西在任何地方都可以工作是相当困难的。
 
 To demonstrate, I'm going to build a simple utility which runs
 a command whenever any of the watched files change::
 
     ./onchange <command> <file1> [file2] ...
-作为演示，我打算构建一个简单的工具，一旦监视的文件被修改，它就执行一条命令。你可以这样启动它 ::
+作为演示，我打算构建一个简单的工具，它会监视某些文件，并在文件被修改时执行一条命令。
+你可以这样启动它 ::
 
     ./onchange <command> <file1> [file2] ...
 
