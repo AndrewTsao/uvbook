@@ -7,8 +7,8 @@ interface, some things are easier, all are non-blocking but the concepts stay
 the same. In addition libuv offers utility functions to abstract the annoying,
 repetitive and low-level tasks like setting up sockets using the BSD socket
 structures, DNS lookup, and tweaking various socket parameters.
-使用libuv的网络功能，较之直接使用BSD套接字接口差异不大，但某些方面会比较容易，
-并且所有的操作都是非阻塞的，但基本概念是完全一样的。另外，libuv提供了相关的
+libuv的网络部分，较之直接使用BSD套接字接口而言，差异不大，只是某些方面更加
+易用，并且所有的操作都是非阻塞的，概念保持不变。另外，libuv提供了相关的
 工具函数，抽象了那些烦人的、重复的、低级别的任务，比如使用BSD套接字结构启动
 socket，DNS查询，调节不同的socket参数等。
 
@@ -21,7 +21,7 @@ TCP
 TCP is a connection oriented, stream protocol and is therefore based on the
 libuv streams infrastructure.
 
-TCP是面向连接的、流传输协议，因此是基于libuv流基础设施。
+TCP是面向连接的、流传输协议，实现上理所当然是基于libuv流基础设施的。
 
 Server
 ++++++
@@ -35,12 +35,15 @@ Server sockets proceed by:
 4. Use ``uv_accept`` to accept the connection.
 5. Use :ref:`stream operations <buffers-and-streams>` to communicate with the
    client.
+
 服务端Socket使用过程如下：
 1. ``uv_tcp_init`` 初始化一个TCP Watcher.
-2. ``uv_tcp_bind`` 进行绑定监听地址和端口。
-3. ``uv_listen`` 在Watcher上绑定一个回调函数，当客户建立一个连接时，该回调函数将被调用。
+2. ``uv_tcp_bind`` 绑定监听地址和端口。
+3. 调用 ``uv_listen`` 在Watcher上绑定一个回调函数，当客户建立一个连接时，该回
+   调函数将被调用。
 4. 使用 ``uv_accept`` 来接受一个连接。
-5. 使用 :ref:`流的操作 <buffers-and-streams>` 来与客户端进行通讯。
+5. 使用流操作(:ref:`stream operations <buffers-and-streams>`) 的方式与客户端进
+   行通讯。
 
 Here is a simple echo server
 
@@ -61,8 +64,9 @@ Here is a simple echo server
 You can see the utility function ``uv_ip4_addr`` being used to convert from
 a human readable IP address, port pair to the sockaddr_in structure required by
 the BSD socket APIs. The reverse can be obtained using ``uv_ip4_name``.
-实例代码中的利用辅助函数 ``uv_ip4_addr`` 将人类易读的IP地址，端口对转换为BSD套接字API
-要求的sockaddr_in结构体。反过来可以使用 ``uv_ip4_name`` 从结构体中获取IP地址和端口号。
+实例代码中的利用辅助函数 ``uv_ip4_addr`` 将人类易读的IP地址，端口对转换为BSD套接
+字API要求的sockaddr_in结构体。反过来可以使用 ``uv_ip4_name`` 从结构体中获取IP地址
+和端口号。
 
 .. NOTE::
 
