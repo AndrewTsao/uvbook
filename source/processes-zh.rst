@@ -1,19 +1,21 @@
-Processes
-进程
+
+进程 Processes
 =========
 
 libuv offers considerable child process management, abstracting the platform
 differences and allowing communication with the child process using streams or
 named pipes.
+
 libuv 提供了的子进程管理机制，抽象了不同平台的差异性，子进程之间可以使用流和
 命名管道的来进行通讯。
 
-Spawning child processes
-Spawn子进程
+
+Spawn子进程 Spawning child processes
 ------------------------
 
 The simplest case is when you simply want to launch a process and know when it
 exits. This is achieved using ``uv_spawn``.
+
 举个最简单的例子——发起一个进程，然后在进程退出时获得通知。这个任务使用 ``uv_spawn`` 
 就可以完成。
 
@@ -29,6 +31,7 @@ The ``uv_process_t`` struct only acts as the watcher, all options are set via
 ``uv_spawn`` uses ``execvp`` internally, there is no need to supply the full
 path. Finally as per underlying conventions, the arguments array *has* to be
 one larger than the number of arguments, with the last element being ``NULL``.
+
 ``uv_process_t`` 结构体仅仅做为watcher，而所有的选项设置需要借助
 ``uv_process_options_t`` 来完成. 如果仅仅只是起动一个进程，你只要设置 ``file`` 和 
 ``args`` 两个字段就足够了。 ``file`` 指定需要执行的程序。因为 ``uv_spawn`` 内部使
@@ -37,10 +40,12 @@ one larger than the number of arguments, with the last element being ``NULL``.
 
 After the call to ``uv_spawn``, ``uv_process_t.pid`` will contain the process
 ID of the child process.
+
 ``uv_spawn`` 返回时， ``uv_process_t.pid`` 包含了新辟的子进程的进程ID.
 
 The exit callback will be invoked with the *exit status* and the type of *signal*
 which caused the exit.
+
 exit回调函数在调用时会传入退出码(*exit status*)和导致进程退出的信号(*signal*)类型。
 
 .. rubric:: spawn/main.c
@@ -50,14 +55,16 @@ exit回调函数在调用时会传入退出码(*exit status*)和导致进程退�
     :emphasize-lines: 3
 
 It is **required** to close the process watcher after the process exits.
+
 老惯例，进程退出之后，我们也必须关闭这个进程的 watcher，释放相关资源。
 
-Changing the process parameters
-改变进程的参数集
+
+改变进程的参数集 Changing the process parameters
 -------------------------------
 
 Before the child process is launched you can control the execution environment
 using fields in ``uv_process_options_t``.
+
 在子进程启动之前，你可以通过设置 ``uv_process_options_t`` 中的字段来控制子进程
 的执行环境(execution environment)，比如工作目录、环境变量、搜索路径等。
 
@@ -66,6 +73,7 @@ using fields in ``uv_process_options_t``.
 ++++++++++++++++++++++++++
 
 Set ``uv_process_options_t.cwd`` to the corresponding directory.
+
 修改 ``uv_process_options_t.cwd`` 来设置工作目录。
 
 
@@ -76,6 +84,7 @@ Set ``uv_process_options_t.cwd`` to the corresponding directory.
 ``VAR=VALUE`` used to set up the environment variables for the process. Set
 this to ``NULL`` to inherit the environment from the parent (this) process.
 ``uv_process_options_t.env`` 是一个字符串数组，每个元素形如 ``VAR=VALUE`` ，
+
 这个字段用来设置进程的环境变量。如果将这个字段设置为 ``NULL`` ，则表示子进程
 将沿用父进程（也就是指当前进程）的环境变量。
 
@@ -95,15 +104,18 @@ modifies the child process behaviour:
 
 Changing the UID/GID is only supported on Unix, ``uv_spawn`` will fail on
 Windows with ``UV_ENOTSUP``.
+
 只有Unix系统才支持改变子进程的 UID/GID，在Windows平台上 ``uv_spawn`` 会以
 ``UV_ENOTSUP`` 错误宣告失败。
 
 * ``UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS`` - No quoting or escaping of
   ``uv_process_options_t.args`` is done on Windows. Ignored on Unix.
+  
   表明 ``uv_process_options_t.args`` 忽略引号和转义字符。该标记只在Windows有用，Unix上
   会忽略该标记。
 * ``UV_PROCESS_DETACHED`` - Starts the child process in a new session, which
   will keep running after the parent process exits. See example below.
+  
   在新的会话中启动子进行，当父进程退出后子进程仍继续运行。后续实例中展示了这个用法。
 
 分离子进程 Detaching processes
@@ -112,6 +124,7 @@ Windows with ``UV_ENOTSUP``.
 Passing the flag ``UV_PROCESS_DETACHED`` can be used to launch daemons, or
 child processes which are independent of the parent so that the parent exiting
 does not affect it.
+
 利用 ``UV_PROCESS_DETACHED`` 标志，可以启动一个守护进程，或者让子进程独立于父进程，
 不受父进程的退出影响。如果不分离的话，子进程是不活不过父进程的。
 
@@ -123,6 +136,7 @@ does not affect it.
 
 Just remember that the watcher is still monitoring the child, so your program
 won't exit. Use ``uv_unref()`` if you want to be more *fire-and-forget*.
+
 记得此时wather仍然还在监视子进程，所以你的程序不会退出。如果你实施 *fire-and-forget*
 模型的话，要调用 ``uv_unref()`` .
 
@@ -140,6 +154,7 @@ termination of the process. The signature of ``uv_kill`` is::
 For processes started using libuv, you may use ``uv_process_kill`` instead,
 which accepts the ``uv_process_t`` watcher as the first argument, rather than
 the pid. In this case, **remember to call** ``uv_close`` on the watcher.
+
 在unix平台上，libuv 封装了标准的 ``kill(2)`` 系统调用，而在windows上也实施了
 相似的语义，with *on caveat*. ``uv_kill`` 在windows平台上只支持 ``SIGTERM``, 
 ``SIGINT`` 和 ``SIGKILL``, 这些信号都是将结束进程。 ``uv_kill`` 的签名为:: 
@@ -161,6 +176,7 @@ applications launches a sub-command and you want any errors to go in the log
 file, but ignore ``stdout``. For this you'd like to have ``stderr`` of the
 child to be displayed. In this case, libuv supports *inheriting* file
 descriptors. In this sample, we invoke the test program, which is:
+
 每一个正常的、新辟出的进程都拥有三个标准的文件描述符，分别是0, 1, 2对应的，
 标准输入(``stdin``)、标准输出(``stdout``)和标准错误输出(``stderr``)。有时你可能
 希望和子进程共用这些文件描述符。比如，你的应用启动了一个子命令，并且希望将所有
@@ -189,11 +205,13 @@ file descriptors being set. ``uv_process_options_t.stdio`` is an array of
 where flags can have several values. Use ``UV_IGNORE`` if it isn't going to be
 used. If the first three ``stdio`` fields are marked as ``UV_IGNORE`` they'll
 redirect to ``/dev/null``.
+
 其中的 ``flags`` 可以设置一些值。如果不希望被使用的话，设置为 ``UV_IGNORE`` .
 如果前三个 ``stdio`` 被标记为 ``UV_IGNORE``, 它们则被重定向到 ``/dev/null`` 。
 
 Since we want to pass on an existing descriptor, we'll use ``UV_INHERIT_FD``.
 Then we set the ``fd`` to ``stderr``.
+
 因为例中我们希望传递一个已存在的文件描述符，所以我们使用 ``UV_INHERIT_FD``, 然后
 再将 ``fd`` 设置为 ``stderr`` .
 
@@ -205,6 +223,7 @@ Then we set the ``fd`` to ``stderr``.
 
 If you run ``proc-stream`` you'll see that only the line "This is stderr" will
 be displayed. Try marking ``stdout`` as being inherited and see the output.
+
 运行 ``proc-streams`` 控制台将只显示一行 "This is stderr"。若是将 ``stdout``
 也继承给子进程的话，你就可以看到子进程的标准输出的内容。
 
@@ -212,6 +231,7 @@ It is dead simple to apply this redirection to streams.  By setting ``flags``
 to ``UV_INHERIT_STREAM`` and setting ``data.stream`` to the stream in the
 parent process, the child process can treat that stream as standard I/O. This
 can be used to implement something like CGI_.
+
 使用流重定向功能也非常简单。只要设置 ``flags`` 为 ``UV_INHERIT_STREAM`` 并将
 ``data.stream`` 设置为父进程的某个流，子进行就可以像处理标准输出输出流一样使用
 这些流。比如一个简单的 CGI_ 功能中可能出现这种场景。
@@ -219,6 +239,7 @@ can be used to implement something like CGI_.
 .. _CGI: http://en.wikipedia.org/wiki/Common_Gateway_Interface
 
 A sample CGI script/executable is:
+
 比如下面这个简单的CGI脚本（是个执行程序）: 
 
 .. rubric:: cgi/tick.c
@@ -226,6 +247,7 @@ A sample CGI script/executable is:
 
 The CGI server combines the concepts from this chapter and :doc:`networking` so
 that every client is sent ten ticks after which that connection is closed.
+
 我们将结合了本章的概念和 :doc:`networking` 来实现一个CGI服务器，服务器会给每一个
 连入的客户端发送10个tick，然后关闭连接。
 
@@ -237,6 +259,7 @@ that every client is sent ten ticks after which that connection is closed.
 
 Here we simply accept the TCP connection and pass on the socket (*stream*) to
 ``invoke_cgi_script``.
+
 这段代码简单的接受TCP连接，并将socket(*stream*) 传给 ``invoke_cgi_script``.
 
 .. rubric:: cgi/main.c
@@ -249,6 +272,7 @@ The ``stdout`` of the CGI script is set to the socket so that whatever our tick
 script prints gets sent to the client. By using processes, we can offload the
 read/write buffering to the operating system, so in terms of convenience this
 is great. Just be warned that creating processes is a costly task.
+
 将CGI脚本的标准输出 ``stdout`` 定向到 socket，使得脚本打印出的所有tick都被
 发送到客户端。通过利用进程，我们将缓冲区读写的责任移交给了操作系统，使用起来很方
 便。但要记住创建进程本身是一项代价比较高的任务。
@@ -263,6 +287,7 @@ libuv's ``uv_pipe_t`` structure is slightly confusing to Unix programmers,
 because it immediately conjures up ``|`` and `pipe(7)`_. But ``uv_pipe_t`` is
 not related to anonymous pipes, rather it has two uses:
 libuv 的 ``uv_pipe_t`` 结构令Unix程序员感到困惑。因为它立刻让人想起 ``|`` 和 `pipe(7)`_.
+
 但是 ``uv_pipe_t`` 和匿名管道没什么关系。它有两种用法：
 
 #. Stream API - It acts as the concrete implementation of the ``uv_stream_t``
@@ -270,6 +295,7 @@ libuv 的 ``uv_pipe_t`` 结构令Unix程序员感到困惑。因为它立刻让�
    performed using ``uv_pipe_open`` as covered in :ref:`buffers-and-streams`.
    You could also use it for TCP/UDP, but there are already convenience functions
    and structures for them.
+   
    流API － 它实现了 ``uv_stream_t`` API，提供了一套针对本地文件的IO流接口。
    这需要使用 ``uv_pipe_open`` 函数，具体内容在 :ref:`buffers-and-streams` 中讨论了。
    你也可以将它用于 TCP/UDP，只不过它们已经拥有了一套方便的函数和结构了。
@@ -277,6 +303,7 @@ libuv 的 ``uv_pipe_t`` 结构令Unix程序员感到困惑。因为它立刻让�
 #. IPC mechanism - ``uv_pipe_t`` can be backed by a `Unix Domain Socket`_ or
    `Windows Named Pipe`_ to allow multiple processes to communicate. This is
    discussed below.
+   
    IPC 机制 － ``uv_pipe_t`` 依靠 `Unix Domain Socket`_ 或者 `Windows Named Pipe`_
    从而允许多进程进行通讯。下面来讨论这些内容。
 
@@ -306,7 +333,7 @@ notification. Various applications can then react when a contact comes online
 or new hardware is detected. The MySQL server also runs a domain socket on
 which clients can interact with it.
 
-因为domain sockets [#]_ 是可以有命名的，并且在文件系统中有一个location，利用
+因为domain sockets 是可以有命名的，并且在文件系统中有一个location，利用
 这些可以进行无关的进程之间的IPC. 开源桌面环境中使用的D-BUS系统就利用了
 domain sockets进行事件通知。借此许多应用程序就可以对联系人上线或是侦测到新硬件
 时做出响应。MySQL服务器也运行了一个domain socket，客户可以利用它与服务器交互。
@@ -314,6 +341,7 @@ domain sockets进行事件通知。借此许多应用程序就可以对联系人
 When using domain sockets, a client-server pattern is usually followed with the
 creator/owner of the socket acting as the server. After the initial setup,
 messaging is no different from TCP, so we'll re-use the echo server example.
+
 在使用domain socket的时候，一般会采取客户－服务器模式，socket的创建者（或所有者）
 作为服务器角色。初始化设置完成之后，消息传递过程就与TCP没什么两样了，因此我们再
 次使用echo 服务器的例子来完成阐述。
@@ -363,12 +391,14 @@ servers, worker processes and other ways to make optimum use of CPU.
 
     On Windows, only file descriptors representing TCP sockets can be passed
     around.
+    
     在Windows上，只有当文件描述符是表示TCP socket时才可以这样传递。
 
 To demonstrate, we will look at a echo server implementation that hands of
 clients to worker processes in a round-robin fashion. This program is a bit
 involved, and while only snippets are included in the book, it is recommended
 to read the full code to really understand it.
+
 作为演示，我们再来实现一个echo server，这次服务器将以round-robin(负载均衡)的
 方式调度工作者进程来处理客户请求。程序有点难懂，本书中仅包含一些片段，所以推荐
 阅读全部代码来理解它。
@@ -407,6 +437,7 @@ Although ``accept`` seems odd in this code, it actually makes sense. What
 another file descriptor (The listening socket). Which is exactly what we do
 here. Fetch the file descriptor (``client``) from ``queue``. From this point
 the worker does standard echo server stuff.
+
 虽然 ``accept`` 在这段代码里看起来别扭，但确实合理。传统的 ``accept`` 做的事情
 就是从一个文件描述符（侦听socket）获取另一个文件描述符（客户的socket）。这里也
 是这么干的。从 ``queue`` 取得一个文件描述符(``client``)，从这时开始，worker就
@@ -414,6 +445,7 @@ the worker does standard echo server stuff.
 
 Turning now to the master, let's take a look at how the workers are launched to
 allow load balancing.
+
 接来再介绍master，让我们来看看它是如何启动worker并进行负载均衡的。
 
 .. rubric:: multi-echo-server/main.c
