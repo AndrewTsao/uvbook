@@ -6,16 +6,17 @@ Wait a minute? Why are we on threads? Aren't event loops supposed to be **the
 way** to do *web-scale programming*? Well no. Threads are still the medium in
 which the processor does its job, and threads are mighty useful sometimes, even
 though you might have to wade through synchronization primitives.
-[吃惊]等一下？为什么讨论线程？难道事件循环不能成为一种 *web-scale programming* 的方式？
-当然不是。线程仍然是处理器执行工作的载体，某些时候线程是有用武之地的，尽管你不得不费力
-地处理同步原语。
+怎么？还要讨论线程？难道事件循环不能独霸 *web-scale programming* ？当然不是。线程
+仍然是处理器执行工作的载体，某些时候线程是有用武之地的，尽管你不得不费力地处理同
+步原语。
 
 Threads are used internally to fake the asynchronous nature of all the system
 calls. libuv also uses threads to allow you, the application, to perform a task
 asynchronously that is actually blocking, by spawning a thread and collecting
 the result when it is done.
-通过内部使用线程来使所有系统调用具有异步特性。libuv也利用线程来允许你的应用程序，
-通过Spawning出一个新的线程，执行某些实际上是会阻塞的任务，当任务完成时，收集运行结果。
+在接口内部使用线程来模拟异步行为，可以让所有的系统调用具备异步的调用方式。
+libuv也利用线程来允许你的应用程序，异步地执行任务，这些任务实际上是会阻塞主线程的
+，但通过Spawn出一个新的线程，并在新线程中执行任务，并在任务完成时，收集结果。
 从而产生一种异步执行的效果。
 
 Today there are two predominant thread libraries. The Windows threads
@@ -30,23 +31,23 @@ loop and callback principles, threads are complete agnostic, they block as
 required, signal errors directly via return values and, as shown in the
 :ref:`first example <thread-create-example>`, don't even require a running
 event loop.
-libuv线程设施的一个显著方面是它被自包含在libuv之中。尽管它的其它feature是紧密的依赖
-于事件循环和回调原则，但线程是完全不可感知的，在必要时执行阻塞操作，也可以直接利用返
-回值来告知错误发生，甚至可以像例子(:ref:`first example <thread-create-example>`)中那
-样，不需要运行事件循环。
+libuv线程设施的一个显著方面是，它以一种相当孤立的方式包含在libuv。尽管libuv其它特
+性都紧密依赖于事件循环和回调原则，但线程完全不必在乎这些，你可以在必要时执行阻塞
+操作，也可以直接利用返回值的方式而不是回调来告知错误发生，甚至可以像例子
+(:ref:`first example <thread-create-example>`)中那样，不需要运行事件循环。
 
 libuv's thread API is also very limited since the semantics and syntax of
 threads are different on all platforms, with different levels of completeness.
-libuv的线程API使用时受到了许多的限制，因为在不同的平台上实现进度的差异，
-导致了线程的语义和用法并不一致。
+libuv的线程API使用时受到了许多的限制，由于实现进度的差异，导致了线程的语义和用法
+在不同的平台上并不一致。
 
 This chapter makes the following assumption: **There is only one event loop,
 running in one thread (the main thread)**. No other thread interacts
 with the event loop (except using ``uv_async_send``). :doc:`multiple` covers
 running event loops in different threads and managing them.
-本章的使用将作这样一个假设： **在主线程中只运行一个事件循环** 。除了使用 ``uv_async_send`` 之外，
-没有其它的线程和事件循环进行交互。另见:doc:`multiple` 讨论了在不同的线程中运行多个事件循环及其
-交织过程。
+在继续本章阐述之前，我们作了这样一个假设： **在主线程中只运行一个事件循环** 。除
+了使用 ``uv_async_send`` 之外，没有其它线程和事件循环交互方式。
+另见:doc:`multiple` 讨论了在不同的线程中运行多个事件循环及其交织过程。
 
 
 Core thread operations
@@ -55,8 +56,8 @@ Core thread operations
 
 There isn't much here, you just start a thread using ``uv_thread_create()`` and
 wait for it to close using ``uv_thread_join()``.
-此例相当简单，你只要使用 ``uv_thread_create()`` 启动一个线程，然后使用 ``uv_thread_join()`` 
-等待它关闭。
+例子相当简单，你只要使用 ``uv_thread_create()`` 启动一个线程，
+然后使用 ``uv_thread_join()`` 等待它运行结束。
 
 .. _thread-create-example:
 
@@ -71,15 +72,15 @@ wait for it to close using ``uv_thread_join()``.
     ``uv_thread_t`` is just an alias for ``pthread_t`` on Unix, but this is an
     implementation detail, avoid depending on it to always be true.
     在Unix上，``uv_thread_t`` 只是 ``pthread_t`` 的一个别名。但这是实现的细节，
-    必须信赖这一前提，或许某天就不是这样了。
+    请避免依赖这一前提，或许某天就不是这样了。
 
 The second parameter is the function which will serve as the entry point for
 the thread, the last parameter is a ``void *`` argument which can be used to pass
 custom parameters to the thread. The function ``hare`` will now run in a separate
 thread, scheduled pre-emptively by the operating system:
-``uv_thread_create()`` 的第二个参数是作为线程入口点的函数，最后的参数是一个 ``void *``
-类型的参数，可以用来向线程传递参数。函数 ``hare`` 将在单独的线程中执行，并由操作系统
-进行抢占式调度。
+``uv_thread_create()`` 的第二个参数是作为线程入口点的函数，最后的参数是一个
+``void *`` 类型的参数，可以用来向线程传递参数。函数 ``hare`` 将在单独的线程中执行
+，并由操作系统进行抢占式调度。
 
 .. rubric:: thread-create/main.c
 .. literalinclude:: ../code/thread-create/main.c
@@ -107,7 +108,7 @@ Mutexes
 ~~~~~~~
 
 The mutex functions are a **direct** map to the pthread equivalents.
-与互斥相关的函数直接对应于pthread中的相应函数。
+与互斥相关的函数，在pthread中都能找到对应的函数。
 
 .. rubric:: libuv mutex functions libuv里的互斥函数
 .. literalinclude:: ../libuv/include/uv.h
@@ -124,7 +125,7 @@ If `libuv` has been compiled with debugging enabled, ``uv_mutex_destroy()``,
 Similarly ``uv_mutex_trylock()`` will abort if the error is anything *other
 than* ``EAGAIN``.
 如果`libuv`是debug版本的话， ``uv_mutex_destroy()``, ``uv_mutex_lock()`` 和
-``uv_mutext_unlock()`` 在出错时调用 ``abort()``. 相似的 ``uv_mutex_trylock()`` 
+``uv_mutext_unlock()`` 在出错时会调用 ``abort()``. 相似的 ``uv_mutex_trylock()`` 
 除了 ``EAGAIN`` 错误之外，其它错误也将执行 abort操作。
 
 Recursive mutexes are supported by some platforms, but you should not rely on
@@ -139,18 +140,18 @@ locked a mutex attempts to lock it again. For example, a construct like::
 can be used to wait until another thread initializes some stuff and then
 unlocks ``a_mutex`` but will lead to your program crashing if in debug mode, or
 otherwise behaving wrongly.
-可重入互斥体只在一些平台上受到支持，所以你不应该太过于依赖它们。如果某个线程试图重复
-锁住一个该线程已经锁定的互斥体，将会导致BSD的互斥体实现产生错误。比如，经常使用的这
-类代码:: 
+可重入互斥体只在一些平台上受到支持，所以你不应该太过于依赖它们。如果某个线程试图
+重复锁住一个该线程已经锁定的互斥体，将会引发BSD的互斥体实现产生错误。比如，经常使
+用的这类代码:: 
 
     uv_mutex_lock(a_mutex);
     uv_thread_create(thread_id, entry, (void *)a_mutex);
     uv_mutex_lock(a_mutex);
     // more things here
 
-来让当前线程等待新辟的线程完成某些初始化工作，新辟线程通过完成工作之后释放 ``a_mutex``
-来通知主线程。但如果在debug模式下，这会导致你的程序崩溃，如果是release模式下则引发意料
-之外的行为。
+来让当前线程等待新辟的线程完成某些初始化工作，新辟线程通过完成工作之后释放
+``a_mutex`` 来通知主线程。但如果在debug模式下，这会导致你的程序崩溃，如果是
+release模式下则引发意料之外的行为。
 
 
 .. tip::
@@ -191,11 +192,11 @@ with the event-loop paradigm. When you use event loops, it is *imperative to
 make sure that no function which runs periodically in the loop thread blocks
 when performing I/O or is a serious CPU hog*, because this means the loop slows
 down and events are not being dealt with at full capacity.
-``uv_queue_work()`` 轻易的允许一个应用在单独的线程中运行一个任务，并在任务执行
-结束时触发一个回调函数。看似简单的函数，其魅力在于本质上可以让任意一个第三方库
-都能够与事件循环模式一起工作。因为使用事件循环模式时，它强制要求你确保没有一个
-函数会在周期性执行的循环体内进行IO操作或者严重吃CPU的操作。因为这就意味着事件
-循环过程性能降低，而不能全力以赴地处理事件。
+``uv_queue_work()`` 是让你的应用轻松地在独立的线程中执行任务，并在任务执行结束时
+触发回调函数。这个看似简单的功能，其魅力在于，能够让任意一个第三方库与事件循环模
+式和谐共处。因为使用事件循环模式时，它强制要求你确保没有一个函数会在周期性执行的
+循环体内进行IO操作或者严重吃CPU的操作。因为这就意味着事件循环过程性能降低，而不能
+全力以赴地处理事件。
 
 事件循环所有线程做的唯一的事情就是尽可能快地处理事件。而IO或者计算任务都应该
 在该线程之外进行。
@@ -208,7 +209,7 @@ own system of running the task in a separate thread.  libuv just provides
 a convenient abstraction for this.
 但大量现存代码都带有阻塞性质（因为内部调用了IO例程），要使用这些代码而你又想具备
 高响应性，则必须和线程一起使用（经典的多线程服务器模型）。要让它们能够与事件循
-环配合工作，就要求你设计的系统在单独的线程运行任务。libuv刚好为此工作提供了一个
+环配合工作，就要求你设计的系统在独立的线程执行任务。libuv刚好为此工作提供了一个
 合理可行的抽象。
 
 Here is a simple example inspired by `node.js is cancer`_. We are going to
@@ -229,9 +230,10 @@ run in a separate thread. The ``uv_work_t`` structure is the clue. You can pass
 arbitrary data through it using the ``void* data`` field and use it to
 communicate to and from the thread. But be sure you are using proper locks if
 you are changing things while both threads may be running.
-实际的任务函数是简单的，没有要求要在独立的线程中运行。 ``uv_work_t`` 结构体允许你
-通过它的 ``void *data`` 字段传递任意数据给工作线程或者从工作线程返回数据以达到通讯
-的目的。但是如果你想在线程正在运行过程中去修改数据的话，请务必执行恰当的锁定操作。
+实际的任务函数很简单的，没什么好展示的。它将在独立的线程中执行。 ``uv_work_t`` 结
+构体类似粘合剂，利用它的 ``void *data`` 字段你可以传递任意数据给工作线程或者从工
+作线程返回数据以达到通讯目的。但是如果你想在线程运行过程中修改数据的话，请务必执
+行恰当的锁操作。
 
 The trigger is ``uv_queue_work``:
 
@@ -279,7 +281,7 @@ the message sender, only threads with libuv loops can be receivers (or rather
 the loop is the receiver). libuv will invoke the callback (``print_progress``)
 with the async watcher whenever it receives a message.
 `async` 线程通过事件循环进行通讯，因此尽管任何线程都是可以是消息的发送者，但
-只有libuv事件循环所在的线程可以是接收者（或者说只有事件循环才能接收消息）。
+只有libuv事件循环所在的线程才可以作为接收者（或者说只有事件循环才能接收消息）。
 libuv会在它收到消息时调用async watcher上的回调函数（ ``print_progress`` ）。
 
 .. warning::
@@ -336,9 +338,9 @@ After this example, which showed the abuse of the ``data`` field, bnoordhuis_
 pointed out that using the ``data`` field is not thread safe, and
 ``uv_async_send()`` is actually only meant to wake up another thread. Use
 a mutex or rwlock to ensure accesses are performed in the right order.
-[??] 实例结束时，要指出的 ``data`` 字段被错误使用了。 bnoordhuis_ 指出使用
-``data`` 字段不是线程安全的， ``uv_async_send()`` 只能用于唤醒其它线程。
-如果要以正确的顺序访问数以的话，请使用mutex和rwlock。
+在这个例子即将结束时，我要指出的是 ``data`` 字段被错误使用了。 bnoordhuis_ 指出使
+用 ``data`` 字段不是线程安全的， ``uv_async_send()`` 只能用于唤醒其它线程。
+如果要以正确的顺序访问数的话，请使用mutex和rwlock。
 
 .. warning::
 
@@ -352,10 +354,11 @@ node.js, a v8 engine instance, contexts and its objects are bound to the thread
 that the v8 instance was started in. Interacting with v8 data structures from
 another thread can lead to undefined results. Now consider some node.js module
 which binds a third party library. It may go something like this:
-另一个必须使用 ``uv_async_send`` 的场景是，协调某些要求线程绑定（thread affinity）
-的库一起工作来完成任务。比如在node.js当中，v8引擎实例、上下文及其对象都是被绑定到
-v8实例启动时的线程上的。从别的线程操作v8的数据结构可能导致意料之外的后果。现在来思
-考一下某些binding第三方库的node.js模块。可能需要像这样做：
+另一个必须使用 ``uv_async_send`` 的场景是，和某些使用了线程绑定特性
+（thread affinity）的第三方库协作来完成任务。比如在node.js当中，V8引擎实例、
+上下文及其对象都是被绑定到V8实例启动时的线程上的。从别的线程操作V8的数据结构可能
+导致意料之外的后果。现在来思考一下某些binding第三方库的node.js模块。可能需要像这
+样做：
 
 1. In node, the third party library is set up with a JavaScript callback to be
    invoked for more information::
@@ -385,13 +388,13 @@ v8实例启动时的线程上的。从别的线程操作v8的数据结构可能�
 3. The actual work being done in a separate thread wants to invoke the progress
    callback, but cannot directly call into v8 to interact with JavaScript. So
    it uses ``uv_async_send``.
-   实际的工作正在独立的线程中进行处理，并意欲调用progress回调函数，但是不能直接调到
-   v8里面的JavaScript。因为它使用 ``uv_async_send``.
+   实际的工作正在独立的线程中进行处理，并意欲调用progress回调函数，但是不能直接
+   调到V8里面的JavaScript。因此它使用 ``uv_async_send``.
 
 4. The async callback, invoked in the main loop thread, which is the v8 thread,
    then interacts with v8 to invoke the JavaScript callback.
-   async回调在主线程中被调用，这正好是v8所在的线程，在这里可以访问v8虚拟机，并调用到
-   JavaScript回调函数。
+   async回调在主线程中被调用，这正好是V8所在的线程，在这里可以访问V8虚拟机，并调
+   用到JavaScript回调函数。
 
 .. _pthreads: http://man7.org/linux/man-pages/man7/pthreads.7.html
 
