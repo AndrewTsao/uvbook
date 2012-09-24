@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Threads &mdash; An Introduction to libuv</title>
+    <title>线程 Threads &mdash; An Introduction to libuv</title>
     
     <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -30,8 +30,6 @@
     <script type="text/javascript" src="_static/theme_extras.js"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="top" title="An Introduction to libuv" href="index.html" />
-    <link rel="next" title="Processes" href="processes.html" />
-    <link rel="prev" title="Networking" href="networking.html" />
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -50,16 +48,12 @@
   <body>
       <div class="header"><h1 class="heading"><a href="index.html">
           <span>An Introduction to libuv</span></a></h1>
-        <h2 class="heading"><span>Threads</span></h2>
+        <h2 class="heading"><span>线程 Threads</span></h2>
       </div>
       <div class="topnav">
       
         <p>
-        «&#160;&#160;<a href="networking.html">Networking</a>
-        &#160;&#160;::&#160;&#160;
         <a class="uplink" href="index.html">Contents</a>
-        &#160;&#160;::&#160;&#160;
-        <a href="processes.html">Processes</a>&#160;&#160;»
         </p>
 
       </div>
@@ -67,34 +61,54 @@
         
         
   <div class="section" id="threads">
-<h1>Threads<a class="headerlink" href="#threads" title="Permalink to this headline">¶</a></h1>
+<h1>线程 Threads<a class="headerlink" href="#threads" title="Permalink to this headline">¶</a></h1>
 <p>Wait a minute? Why are we on threads? Aren&#8217;t event loops supposed to be <strong>the
 way</strong> to do <em>web-scale programming</em>? Well no. Threads are still the medium in
 which the processor does its job, and threads are mighty useful sometimes, even
 though you might have to wade through synchronization primitives.</p>
+<p>怎么？还要讨论线程？难道事件循环不能独霸 <em>web-scale programming</em> ？当然不是。线程
+仍然是处理器执行工作的载体，某些时候线程是有用武之地的，尽管你不得不费力地处理同
+步原语。</p>
 <p>Threads are used internally to fake the asynchronous nature of all the system
 calls. libuv also uses threads to allow you, the application, to perform a task
 asynchronously that is actually blocking, by spawning a thread and collecting
 the result when it is done.</p>
+<p>在接口内部使用线程来模拟异步行为，可以让所有的系统调用具备异步的调用方式。
+libuv也利用线程来允许你的应用程序，异步地执行任务，这些任务实际上是会阻塞主线程的
+，但通过Spawn出一个新的线程，并在新线程中执行任务，并在任务完成时，收集结果。
+从而产生一种异步执行的效果。</p>
 <p>Today there are two predominant thread libraries. The Windows threads
 implementation and <a class="reference external" href="http://man7.org/linux/man-pages/man7/pthreads.7.html">pthreads</a>. libuv&#8217;s thread API is analogous to
 the pthread API and often has similar semantics.</p>
+<p>当前存在两个主流的线程库。一个是Windows线程实现，另一个是 <a href="#id12"><span class="problematic" id="id13">`pthread`_</span></a>.
+libuv的线程API模拟了Pthread的API, 并具有相似的语义。</p>
 <p>A notable aspect of libuv&#8217;s thread facilities is that it is a self contained
 section within libuv. Whereas other features intimately depend on the event
 loop and callback principles, threads are complete agnostic, they block as
 required, signal errors directly via return values and, as shown in the
-<a class="reference internal" href="threads-zh.html#thread-create-example"><em>first example</em></a>, don&#8217;t even require a running
+<a class="reference internal" href="#thread-create-example"><em>first example</em></a>, don&#8217;t even require a running
 event loop.</p>
+<p>libuv线程设施的一个显著方面是，它以一种相当孤立的方式包含在libuv。尽管libuv其它特
+性都紧密依赖于事件循环和回调原则，但线程完全不必在乎这些，你可以在必要时执行阻塞
+操作，也可以直接利用返回值的方式而不是回调来告知错误发生，甚至可以像例子
+(<a class="reference internal" href="#thread-create-example"><em>first example</em></a>)中那样，不需要运行事件循环。</p>
 <p>libuv&#8217;s thread API is also very limited since the semantics and syntax of
 threads are different on all platforms, with different levels of completeness.</p>
+<p>libuv的线程API使用时受到了许多的限制，由于实现进度的差异，导致了线程的语义和用法
+在不同的平台上并不一致。</p>
 <p>This chapter makes the following assumption: <strong>There is only one event loop,
 running in one thread (the main thread)</strong>. No other thread interacts
 with the event loop (except using <tt class="docutils literal"><span class="pre">uv_async_send</span></tt>). <a class="reference internal" href="multiple.html"><em>Multiple event loops</em></a> covers
 running event loops in different threads and managing them.</p>
+<p>在继续本章阐述之前，我们作了这样一个假设： <strong>在主线程中只运行一个事件循环</strong> 。除
+了使用 <tt class="docutils literal"><span class="pre">uv_async_send</span></tt> 之外，没有其它线程和事件循环交互方式。
+另见:doc:<cite>multiple</cite> 讨论了在不同的线程中运行多个事件循环及其交织过程。</p>
 <div class="section" id="core-thread-operations">
-<h2>Core thread operations<a class="headerlink" href="#core-thread-operations" title="Permalink to this headline">¶</a></h2>
+<h2>核心线程操作 Core thread operations<a class="headerlink" href="#core-thread-operations" title="Permalink to this headline">¶</a></h2>
 <p>There isn&#8217;t much here, you just start a thread using <tt class="docutils literal"><span class="pre">uv_thread_create()</span></tt> and
 wait for it to close using <tt class="docutils literal"><span class="pre">uv_thread_join()</span></tt>.</p>
+<p>例子相当简单，你只要使用 <tt class="docutils literal"><span class="pre">uv_thread_create()</span></tt> 启动一个线程，
+然后使用 <tt class="docutils literal"><span class="pre">uv_thread_join()</span></tt> 等待它运行结束。</p>
 <p class="rubric" id="thread-create-example">thread-create/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -121,13 +135,18 @@ wait for it to close using <tt class="docutils literal"><span class="pre">uv_thr
 </td></tr></table></div>
 <div class="admonition tip">
 <p class="first admonition-title">Tip</p>
-<p class="last"><tt class="docutils literal"><span class="pre">uv_thread_t</span></tt> is just an alias for <tt class="docutils literal"><span class="pre">pthread_t</span></tt> on Unix, but this is an
+<p><tt class="docutils literal"><span class="pre">uv_thread_t</span></tt> is just an alias for <tt class="docutils literal"><span class="pre">pthread_t</span></tt> on Unix, but this is an
 implementation detail, avoid depending on it to always be true.</p>
+<p class="last">在Unix上，<tt class="docutils literal"><span class="pre">uv_thread_t</span></tt> 只是 <tt class="docutils literal"><span class="pre">pthread_t</span></tt> 的一个别名。但这是实现的细节，
+请避免依赖这一前提，或许某天就不是这样了。</p>
 </div>
 <p>The second parameter is the function which will serve as the entry point for
 the thread, the last parameter is a <tt class="docutils literal"><span class="pre">void</span> <span class="pre">*</span></tt> argument which can be used to pass
 custom parameters to the thread. The function <tt class="docutils literal"><span class="pre">hare</span></tt> will now run in a separate
 thread, scheduled pre-emptively by the operating system:</p>
+<p><tt class="docutils literal"><span class="pre">uv_thread_create()</span></tt> 的第二个参数是作为线程入口点的函数，最后的参数是一个
+<tt class="docutils literal"><span class="pre">void</span> <span class="pre">*</span></tt> 类型的参数，可以用来向线程传递参数。函数 <tt class="docutils literal"><span class="pre">hare</span></tt> 将在单独的线程中执行
+，并由操作系统进行抢占式调度。</p>
 <p class="rubric">thread-create/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
@@ -150,17 +169,21 @@ thread, scheduled pre-emptively by the operating system:</p>
 </td></tr></table></div>
 <p>Unlike <tt class="docutils literal"><span class="pre">pthread_join()</span></tt> which allows the target thread to pass back a value to
 the calling thread using a second parameter, <tt class="docutils literal"><span class="pre">uv_thread_join()</span></tt> does not. To
-send values use <a class="reference internal" href="threads-zh.html#inter-thread-communication"><em>线程间通讯 Inter-thread communication</em></a>.</p>
+send values use <a class="reference internal" href="#inter-thread-communication"><em>线程间通讯 Inter-thread communication</em></a>.</p>
+<p>不像 <tt class="docutils literal"><span class="pre">pthread_join()</span></tt> 允许目标线程利用第二个参数向调用线程回传一个值， <tt class="docutils literal"><span class="pre">uv_thread_join()</span></tt> 没有这样的能力。 如果需要传递值的参见:ref:<cite>inter-thread-communication</cite>.</p>
 </div>
 <div class="section" id="synchronization-primitives">
-<h2>Synchronization Primitives<a class="headerlink" href="#synchronization-primitives" title="Permalink to this headline">¶</a></h2>
+<h2>同步原语 Synchronization Primitives<a class="headerlink" href="#synchronization-primitives" title="Permalink to this headline">¶</a></h2>
 <p>This section is purposely spartan. This book is not about threads, so I only
 catalogue any surprises in the libuv APIs here. For the rest you can look at
 the pthreads <a class="reference external" href="pthreads">man pages</a></p>
+<p>这节内容是有意简单处理的。这本书并不是关于线程的，因此我这里仅将libuv API中的
+不同的地方分类编目。其它的相关内容你可以查阅pthread的手册页(<a class="reference external" href="pthreads">man pages</a>)</p>
 <div class="section" id="mutexes">
-<h3>Mutexes<a class="headerlink" href="#mutexes" title="Permalink to this headline">¶</a></h3>
+<h3>互斥 Mutexes<a class="headerlink" href="#mutexes" title="Permalink to this headline">¶</a></h3>
 <p>The mutex functions are a <strong>direct</strong> map to the pthread equivalents.</p>
-<p class="rubric">libuv mutex functions</p>
+<p>与互斥相关的函数，在pthread中都能找到对应的函数。</p>
+<p class="rubric">libuv mutex functions libuv里的互斥函数</p>
 <div class="highlight-c"><pre>   */
  UV_FS_EVENT_WATCH_ENTRY = 1,
 
@@ -170,10 +193,15 @@ the pthreads <a class="reference external" href="pthreads">man pages</a></p>
 </div>
 <p>The <tt class="docutils literal"><span class="pre">uv_mutex_init()</span></tt> and <tt class="docutils literal"><span class="pre">uv_mutex_trylock()</span></tt> functions will return 0 on
 success, -1 on error instead of error codes.</p>
+<p><tt class="docutils literal"><span class="pre">uv_mutex_init()</span></tt> 和 <tt class="docutils literal"><span class="pre">uv_mutex_trylock()</span></tt> 函数如果执行成功则返回0, 否则返回-1，
+而不是错误码。</p>
 <p>If <cite>libuv</cite> has been compiled with debugging enabled, <tt class="docutils literal"><span class="pre">uv_mutex_destroy()</span></tt>,
 <tt class="docutils literal"><span class="pre">uv_mutex_lock()</span></tt> and <tt class="docutils literal"><span class="pre">uv_mutex_unlock()</span></tt> will <tt class="docutils literal"><span class="pre">abort()</span></tt> on error.
 Similarly <tt class="docutils literal"><span class="pre">uv_mutex_trylock()</span></tt> will abort if the error is anything <em>other
 than</em> <tt class="docutils literal"><span class="pre">EAGAIN</span></tt>.</p>
+<p>如果`libuv`是debug版本的话， <tt class="docutils literal"><span class="pre">uv_mutex_destroy()</span></tt>, <tt class="docutils literal"><span class="pre">uv_mutex_lock()</span></tt> 和
+<tt class="docutils literal"><span class="pre">uv_mutext_unlock()</span></tt> 在出错时会调用 <tt class="docutils literal"><span class="pre">abort()</span></tt>. 相似的 <tt class="docutils literal"><span class="pre">uv_mutex_trylock()</span></tt>
+除了 <tt class="docutils literal"><span class="pre">EAGAIN</span></tt> 错误之外，其它错误也将执行 abort操作。</p>
 <p>Recursive mutexes are supported by some platforms, but you should not rely on
 them. The BSD mutex implementation will raise an error if a thread which has
 locked a mutex attempts to lock it again. For example, a construct like:</p>
@@ -186,27 +214,44 @@ locked a mutex attempts to lock it again. For example, a construct like:</p>
 <p>can be used to wait until another thread initializes some stuff and then
 unlocks <tt class="docutils literal"><span class="pre">a_mutex</span></tt> but will lead to your program crashing if in debug mode, or
 otherwise behaving wrongly.</p>
+<p>可重入互斥体只在一些平台上受到支持，所以你不应该太过于依赖它们。如果某个线程试图
+重复锁住一个该线程已经锁定的互斥体，将会引发BSD的互斥体实现产生错误。比如，经常使
+用的这类代码:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="n">uv_mutex_lock</span><span class="p">(</span><span class="n">a_mutex</span><span class="p">);</span>
+<span class="n">uv_thread_create</span><span class="p">(</span><span class="n">thread_id</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">a_mutex</span><span class="p">);</span>
+<span class="n">uv_mutex_lock</span><span class="p">(</span><span class="n">a_mutex</span><span class="p">);</span>
+<span class="c1">// more things here</span>
+</pre></div>
+</div>
+<p>来让当前线程等待新辟的线程完成某些初始化工作，新辟线程通过完成工作之后释放
+<tt class="docutils literal"><span class="pre">a_mutex</span></tt> 来通知主线程。但如果在debug模式下，这会导致你的程序崩溃，如果是
+release模式下则引发意料之外的行为。</p>
 <div class="admonition tip">
 <p class="first admonition-title">Tip</p>
-<p class="last">Mutexes on linux support attributes for a recursive mutex, but the API is
+<p>Mutexes on linux support attributes for a recursive mutex, but the API is
 not exposed via libuv.</p>
+<p class="last">linux平台支持互斥体，但是libuv的API却没有暴露它们。</p>
 </div>
 </div>
 <div class="section" id="locks">
-<h3>Locks<a class="headerlink" href="#locks" title="Permalink to this headline">¶</a></h3>
+<h3>锁 Locks<a class="headerlink" href="#locks" title="Permalink to this headline">¶</a></h3>
 <p>Read-write locks are the other synchronization primitive supported. TODO some
 DB read/write example</p>
+<p>读写锁是已经被支持的另一种同步原语。(TODO: 比如举个数据库读写锁的例子)</p>
 </div>
 <div class="section" id="others">
-<h3>Others<a class="headerlink" href="#others" title="Permalink to this headline">¶</a></h3>
+<h3>其它方面 Others<a class="headerlink" href="#others" title="Permalink to this headline">¶</a></h3>
 <p>Semaphores and condition variables are not implemented yet. Their are a couple
-of patches for condition variable support in libuv <a class="footnote-reference" href="#id6" id="id1">[1]</a> <a class="footnote-reference" href="#id7" id="id2">[2]</a>, but since the
+of patches for condition variable support in libuv <a class="footnote-reference" href="#id7" id="id2">[1]</a> <a class="footnote-reference" href="#id8" id="id3">[2]</a>, but since the
 Windows condition variable system is available only from Windows Vista and
-Windows Server 2008 onwards <a class="footnote-reference" href="#id8" id="id3">[3]</a>, its not in libuv yet.</p>
+Windows Server 2008 onwards <a class="footnote-reference" href="#id9" id="id4">[3]</a>, its not in libuv yet.</p>
+<p>信号量和条件变量尚未实施。但已有两个补丁程序为libuv提供了条件变量的支持[#]_ <a href="#id10"><span class="problematic" id="id11"><span id="id5"></span>[#]_</span></a>,
+由于Windows条件变量系统只受Windows Vista和Windows Server 2008及之后的版本才提供支
+持，因此目前并未包含到libuv。</p>
 </div>
 </div>
-<div class="section" id="libuv-work-queue">
-<span id="id4"></span><h2>libuv work queue<a class="headerlink" href="#libuv-work-queue" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="libuv-libuv-work-queue">
+<h2>libuv的工作队列 libuv work queue<a class="headerlink" href="#libuv-libuv-work-queue" title="Permalink to this headline">¶</a></h2>
 <p><tt class="docutils literal"><span class="pre">uv_queue_work()</span></tt> is a convenience function that allows an application to run
 a task in a separate thread, and have a callback that is triggered when the
 task is done. A seemingly simple function, what makes <tt class="docutils literal"><span class="pre">uv_queue_work()</span></tt>
@@ -215,16 +260,30 @@ with the event-loop paradigm. When you use event loops, it is <em>imperative to
 make sure that no function which runs periodically in the loop thread blocks
 when performing I/O or is a serious CPU hog</em>, because this means the loop slows
 down and events are not being dealt with at full capacity.</p>
+<p><tt class="docutils literal"><span class="pre">uv_queue_work()</span></tt> 是让你的应用轻松地在独立的线程中执行任务，并在任务执行结束时
+触发回调函数。这个看似简单的功能，其魅力在于，能够让任意一个第三方库与事件循环模
+式和谐共处。因为使用事件循环模式时，它强制要求你确保没有一个函数会在周期性执行的
+循环体内进行IO操作或者严重吃CPU的操作。因为这就意味着事件循环过程性能降低，而不能
+全力以赴地处理事件。</p>
+<p>事件循环所有线程做的唯一的事情就是尽可能快地处理事件。而IO或者计算任务都应该
+在该线程之外进行。</p>
 <p>But a lot of existing code out there features blocking functions (for example
 a routine which performs I/O under the hood) to be used with threads if you
 want responsiveness (the classic &#8216;one thread per client&#8217; server model), and
 getting them to play with an event loop library generally involves rolling your
 own system of running the task in a separate thread.  libuv just provides
 a convenient abstraction for this.</p>
+<p>但大量现存代码都带有阻塞性质（因为内部调用了IO例程），要使用这些代码而你又想具备
+高响应性，则必须和线程一起使用（经典的多线程服务器模型）。要让它们能够与事件循
+环配合工作，就要求你设计的系统在独立的线程执行任务。libuv刚好为此工作提供了一个
+合理可行的抽象。</p>
 <p>Here is a simple example inspired by <a class="reference external" href="https://raw.github.com/teddziuba/teddziuba.github.com/master/_posts/2011-10-01-node-js-is-cancer.html">node.js is cancer</a>. We are going to
 calculate fibonacci numbers, sleeping a bit along the way, but run it in
 a separate thread so that the blocking and CPU bound task does not prevent the
 event loop from performing other activities.</p>
+<p>下例是受到了 <a class="reference external" href="https://raw.github.com/teddziuba/teddziuba.github.com/master/_posts/2011-10-01-node-js-is-cancer.html">node.js is cancer</a> 的启发。我们准备计算一个斐波那契数列，并会休眠
+一会，但是由于它运行在一个独立的线程之中，所以它的阻塞以及耗CPU的任务不会阻止事件
+循环处理其它活动。</p>
 <p class="rubric">queue-work/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -258,6 +317,10 @@ run in a separate thread. The <tt class="docutils literal"><span class="pre">uv_
 arbitrary data through it using the <tt class="docutils literal"><span class="pre">void*</span> <span class="pre">data</span></tt> field and use it to
 communicate to and from the thread. But be sure you are using proper locks if
 you are changing things while both threads may be running.</p>
+<p>实际的任务函数很简单的，没什么好展示的。它将在独立的线程中执行。 <tt class="docutils literal"><span class="pre">uv_work_t</span></tt> 结
+构体类似粘合剂，利用它的 <tt class="docutils literal"><span class="pre">void</span> <span class="pre">*data</span></tt> 字段你可以传递任意数据给工作线程或者从工
+作线程返回数据以达到通讯目的。但是如果你想在线程运行过程中修改数据的话，请务必执
+行恰当的锁操作。</p>
 <p>The trigger is <tt class="docutils literal"><span class="pre">uv_queue_work</span></tt>:</p>
 <p class="rubric">queue-work/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
@@ -292,16 +355,23 @@ you are changing things while both threads may be running.</p>
 <p>The thread function will be launched in a separate thread, passed the
 <tt class="docutils literal"><span class="pre">uv_work_t</span></tt> structure and once the function returns, the <em>after</em> function
 will be called, again with the same structure.</p>
+<p>线程函数会在独立的线程中启动，传入的 <tt class="docutils literal"><span class="pre">uv_work_t</span></tt> 结构，会被再次传入到函数返回
+时回调的 <tt class="docutils literal"><span class="pre">after</span></tt> 函数。</p>
 <p>For writing wrappers to blocking libraries, a common <a class="reference internal" href="utilities-zh.html#baton"><em>pattern</em></a>
-is to use a baton to exchange data.</p>
+is to use a baton to exchange data.
+对于那些希望包裹现有的阻塞性质的库的童鞋，可以参考:ref:<cite>pattern &lt;baton&gt;</cite> ，它使用
+一个 <cite>接力棒</cite> 进行数据交换。</p>
 </div>
 <div class="section" id="inter-thread-communication">
-<span id="id5"></span><h2>Inter-thread communication<a class="headerlink" href="#inter-thread-communication" title="Permalink to this headline">¶</a></h2>
+<span id="id6"></span><h2>线程间通讯 Inter-thread communication<a class="headerlink" href="#inter-thread-communication" title="Permalink to this headline">¶</a></h2>
 <p>Sometimes you want various threads to actually send each other messages <em>while</em>
 they are running. For example you might be running some long duration task in
 a separate thread (perhaps using <tt class="docutils literal"><span class="pre">uv_queue_work</span></tt>) but want to notify progress
 to the main thread. This is a simple example of having a download manager
 informing the user of the status of running downloads.</p>
+<p>有些时候你希望不同的线程之间能够在 <em>线程运行过程中</em> 相互发送消息。比如，你可能在
+一个线程(可能使用的 <tt class="docutils literal"><span class="pre">uv_queue_work</span></tt>)里运行一个周期比较长的任务，并希望将任务进
+度通知给主线程。简单的例子就是下载管理器要让用户知晓当前正在下载的任务的进度如何。</p>
 <p class="rubric">progress/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -338,9 +408,12 @@ informing the user of the status of running downloads.</p>
 the message sender, only threads with libuv loops can be receivers (or rather
 the loop is the receiver). libuv will invoke the callback (<tt class="docutils literal"><span class="pre">print_progress</span></tt>)
 with the async watcher whenever it receives a message.</p>
+<p><cite>async</cite> 线程通过事件循环进行通讯，因此尽管任何线程都是可以是消息的发送者，但
+只有libuv事件循环所在的线程才可以作为接收者（或者说只有事件循环才能接收消息）。
+libuv会在它收到消息时调用async watcher上的回调函数（ <tt class="docutils literal"><span class="pre">print_progress</span></tt> ）。</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">It is important to realize that the message send is <em>async</em>, the callback
+<p>It is important to realize that the message send is <em>async</em>, the callback
 may be invoked immediately after <tt class="docutils literal"><span class="pre">uv_async_send</span></tt> is called in another
 thread, or it may be invoked after some time. libuv may also combine
 multiple calls to <tt class="docutils literal"><span class="pre">uv_async_send</span></tt> and invoke your callback only once. The
@@ -351,6 +424,13 @@ or more calls, and libuv hasn&#8217;t had a chance to run the callback yet, it
 <em>may</em> invoke your callback <em>only once</em> for the multiple invocations of
 <tt class="docutils literal"><span class="pre">uv_async_send</span></tt>. Your callback will never be called twice for just one
 event.</p>
+<p class="last">请务必知晓消息的发送是异步的，回调函数也许会在 <tt class="docutils literal"><span class="pre">uv_async_send</span></tt> 之后立即
+在另一个线程中被调用，但也许会滞后一小会。libuv也可能做合并操作——即发送者
+调用多次 <tt class="docutils literal"><span class="pre">uv_async_send</span></tt>，但回调函数只会被调用一次。libuv所做出的承诺是
+回调函数在 <tt class="docutils literal"><span class="pre">uv_async_send</span></tt> 调用之后至少会被调用一次。如果你没有发出
+<tt class="docutils literal"><span class="pre">uv_async_send</span></tt>，回调函数是不会被调用的。如果你发送的两次或多次的
+<tt class="docutils literal"><span class="pre">uv_async_send</span></tt> 调用，但libuv没有机会去调用回调函数的话，它就有可能只调
+用一次回调函数。永远不会发生的事情是一个事件触发多次回调函数调用。</p>
 </div>
 <p class="rubric">progress/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
@@ -385,6 +465,8 @@ event.</p>
 <p>In the download function we modify the progress indicator and queue the message
 for delivery with <tt class="docutils literal"><span class="pre">uv_async_send</span></tt>. Remember: <tt class="docutils literal"><span class="pre">uv_async_send</span></tt> is also
 non-blocking and will return immediately.</p>
+<p>在download函数中，我们利用 <tt class="docutils literal"><span class="pre">uv_async_send</span></tt> 向队列投递消息，以修改了进度指示器。
+请记住： <tt class="docutils literal"><span class="pre">uv_async_send</span></tt> 也是非阻塞的，它在调用后立即返回。</p>
 <p class="rubric">progress/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
@@ -396,7 +478,9 @@ non-blocking and will return immediately.</p>
 </pre></div>
 </td></tr></table></div>
 <p>The callback is a standard libuv pattern, extracting the data from the watcher.</p>
+<p>在回调函数中，从watcher中提取数据的过程是libuv的一个标准模式。？</p>
 <p>Finally it is important to remember to clean up the watcher.</p>
+<p>最后务必记住清理watcher，以释放资源。</p>
 <p class="rubric">progress/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
@@ -411,10 +495,14 @@ non-blocking and will return immediately.</p>
 pointed out that using the <tt class="docutils literal"><span class="pre">data</span></tt> field is not thread safe, and
 <tt class="docutils literal"><span class="pre">uv_async_send()</span></tt> is actually only meant to wake up another thread. Use
 a mutex or rwlock to ensure accesses are performed in the right order.</p>
+<p>在这个例子即将结束时，我要指出的是 <tt class="docutils literal"><span class="pre">data</span></tt> 字段被错误使用了。 <a class="reference external" href="https://github.com/bnoordhuis">bnoordhuis</a> 指出使
+用 <tt class="docutils literal"><span class="pre">data</span></tt> 字段不是线程安全的， <tt class="docutils literal"><span class="pre">uv_async_send()</span></tt> 只能用于唤醒其它线程。
+如果要以正确的顺序访问数的话，请使用mutex和rwlock。</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">mutexes and rwlocks <strong>DO NOT</strong> work inside a signal handler, whereas
+<p>mutexes and rwlocks <strong>DO NOT</strong> work inside a signal handler, whereas
 <tt class="docutils literal"><span class="pre">uv_async_send</span></tt> does.</p>
+<p class="last">mutex和rwlock 不能在singal handler中工作，但 <tt class="docutils literal"><span class="pre">uv_async_send</span></tt> 是可以的。</p>
 </div>
 <p>One use case where uv_async_send is required is when interoperating with
 libraries that require thread affinity for their functionality. For example in
@@ -422,6 +510,11 @@ node.js, a v8 engine instance, contexts and its objects are bound to the thread
 that the v8 instance was started in. Interacting with v8 data structures from
 another thread can lead to undefined results. Now consider some node.js module
 which binds a third party library. It may go something like this:</p>
+<p>另一个必须使用 <tt class="docutils literal"><span class="pre">uv_async_send</span></tt> 的场景是，和某些使用了线程绑定特性
+（thread affinity）的第三方库协作来完成任务。比如在node.js当中，V8引擎实例、
+上下文及其对象都是被绑定到V8实例启动时的线程上的。从别的线程操作V8的数据结构可能
+导致意料之外的后果。现在来思考一下某些binding第三方库的node.js模块。可能需要像这
+样做：</p>
 <ol class="arabic">
 <li><p class="first">In node, the third party library is set up with a JavaScript callback to be
 invoked for more information:</p>
@@ -432,37 +525,52 @@ lib.on_progress(function() {
 
 lib.do();
 
+// do other stuff
+
+在node中，第三方库通过设置JavaScript回调函数来获取更多信息，比如::
+var lib = require('lib');
+lib.on_progress(function() {
+    console.log("Progress");
+});
+
+lib.do();
+
 // do other stuff</pre>
 </div>
 </li>
 <li><p class="first"><tt class="docutils literal"><span class="pre">lib.do</span></tt> is supposed to be non-blocking but the third party lib is
-blocking, so the binding uses <tt class="docutils literal"><span class="pre">uv_queue_work</span></tt>.</p>
+blocking, so the binding uses <tt class="docutils literal"><span class="pre">uv_queue_work</span></tt>.
+<tt class="docutils literal"><span class="pre">lib.do</span></tt> 是被假设为非阻塞的，但第三方库是阻塞的，因此binding时使用 <tt class="docutils literal"><span class="pre">uv_queue_work</span></tt>.</p>
 </li>
 <li><p class="first">The actual work being done in a separate thread wants to invoke the progress
 callback, but cannot directly call into v8 to interact with JavaScript. So
-it uses <tt class="docutils literal"><span class="pre">uv_async_send</span></tt>.</p>
+it uses <tt class="docutils literal"><span class="pre">uv_async_send</span></tt>.
+实际的工作正在独立的线程中进行处理，并意欲调用progress回调函数，但是不能直接
+调到V8里面的JavaScript。因此它使用 <tt class="docutils literal"><span class="pre">uv_async_send</span></tt>.</p>
 </li>
 <li><p class="first">The async callback, invoked in the main loop thread, which is the v8 thread,
-then interacts with v8 to invoke the JavaScript callback.</p>
+then interacts with v8 to invoke the JavaScript callback.
+async回调在主线程中被调用，这正好是V8所在的线程，在这里可以访问V8虚拟机，并调
+用到JavaScript回调函数。</p>
 </li>
 </ol>
-<hr class="docutils" />
-<table class="docutils footnote" frame="void" id="id6" rules="none">
-<colgroup><col class="label" /><col /></colgroup>
-<tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td><a class="reference external" href="https://github.com/nikhilm/libuv/compare/condvar">https://github.com/nikhilm/libuv/compare/condvar</a></td></tr>
-</tbody>
-</table>
+<p class="rubric">Footnotes</p>
 <table class="docutils footnote" frame="void" id="id7" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td><a class="reference external" href="https://github.com/bnoordhuis/libuv/compare/uv_cond">https://github.com/bnoordhuis/libuv/compare/uv_cond</a></td></tr>
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td><a class="reference external" href="https://github.com/nikhilm/libuv/compare/condvar">https://github.com/nikhilm/libuv/compare/condvar</a></td></tr>
 </tbody>
 </table>
 <table class="docutils footnote" frame="void" id="id8" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id3">[3]</a></td><td><a class="reference external" href="http://msdn.microsoft.com/en-us/library/windows/desktop/ms683469(v=vs.85).aspx">http://msdn.microsoft.com/en-us/library/windows/desktop/ms683469(v=vs.85).aspx</a></td></tr>
+<tr><td class="label"><a class="fn-backref" href="#id3">[2]</a></td><td><a class="reference external" href="https://github.com/bnoordhuis/libuv/compare/uv_cond">https://github.com/bnoordhuis/libuv/compare/uv_cond</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id9" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[3]</a></td><td><a class="reference external" href="http://msdn.microsoft.com/en-us/library/windows/desktop/ms683469(v=vs.85).aspx">http://msdn.microsoft.com/en-us/library/windows/desktop/ms683469(v=vs.85).aspx</a></td></tr>
 </tbody>
 </table>
 </div>
@@ -473,11 +581,7 @@ then interacts with v8 to invoke the JavaScript callback.</p>
       <div class="bottomnav">
       
         <p>
-        «&#160;&#160;<a href="networking.html">Networking</a>
-        &#160;&#160;::&#160;&#160;
         <a class="uplink" href="index.html">Contents</a>
-        &#160;&#160;::&#160;&#160;
-        <a href="processes.html">Processes</a>&#160;&#160;»
         </p>
 
       </div>

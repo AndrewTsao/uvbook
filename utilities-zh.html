@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Utilities &mdash; An Introduction to libuv</title>
+    <title>其它工具 Utilities &mdash; An Introduction to libuv</title>
     
     <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -30,8 +30,6 @@
     <script type="text/javascript" src="_static/theme_extras.js"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="top" title="An Introduction to libuv" href="index.html" />
-    <link rel="next" title="About" href="about.html" />
-    <link rel="prev" title="Multiple event loops" href="multiple.html" />
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -50,16 +48,12 @@
   <body>
       <div class="header"><h1 class="heading"><a href="index.html">
           <span>An Introduction to libuv</span></a></h1>
-        <h2 class="heading"><span>Utilities</span></h2>
+        <h2 class="heading"><span>其它工具 Utilities</span></h2>
       </div>
       <div class="topnav">
       
         <p>
-        «&#160;&#160;<a href="multiple.html">Multiple event loops</a>
-        &#160;&#160;::&#160;&#160;
         <a class="uplink" href="index.html">Contents</a>
-        &#160;&#160;::&#160;&#160;
-        <a href="about.html">About</a>&#160;&#160;»
         </p>
 
       </div>
@@ -67,18 +61,25 @@
         
         
   <div class="section" id="utilities">
-<h1>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h1>
+<h1>其它工具 Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h1>
 <p>This chapter catalogues tools and techniques which are useful for common tasks.
 The <a class="reference external" href="http://pod.tst.eu/http://cvs.schmorp.de/libev/ev.pod#COMMON_OR_USEFUL_IDIOMS_OR_BOTH">libev man page</a> already covers some patterns which can be adopted to
-libuv through simple API changes. It also covers parts of the libuv API that
+libuv through simple API changes.  It also covers parts of the libuv API that
 don&#8217;t require entire chapters dedicated to them.</p>
+<p>这章内容将编目一些对常见任务非常有用的工具及技术。 libev 手册页
+(<a class="reference external" href="http://pod.tst.eu/http://cvs.schmorp.de/libev/ev.pod#COMMON_OR_USEFUL_IDIOMS_OR_BOTH">libev man page</a>)已经涵盖的一些使用模式，在libuv中只需简单地修改相应的API。还包
+含了一部分并没必要花费整章内容进行解释的libuv API。</p>
 <div class="section" id="timers">
-<h2>Timers<a class="headerlink" href="#timers" title="Permalink to this headline">¶</a></h2>
+<h2>计时器 Timers<a class="headerlink" href="#timers" title="Permalink to this headline">¶</a></h2>
 <p>Timers invoke the callback after a certain time has elapsed since the timer was
 started. libuv timers can also be set to invoke at regular intervals instead of
 just once.</p>
+<p>计时器一旦启动，就会在一段时间之后调用回调函数。libuv的计时器还可以设置为每间隔一
+段时间（周期性地）就调用一次回调函数。</p>
 <p>Simple use is to init a watcher and start it with a <tt class="docutils literal"><span class="pre">timeout</span></tt>, and optional <tt class="docutils literal"><span class="pre">repeat</span></tt>.
 Timers can be stopped at any time.</p>
+<p>简单的用法是初始化watcher，在启动时传入一个 <tt class="docutils literal"><span class="pre">timeout</span></tt> 和可选的 <tt class="docutils literal"><span class="pre">repeat</span></tt> (是否
+重复)，计时器就开始运行了。当然计时器允许在任何时候停止。</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="n">uv_timer_t</span> <span class="n">timer_req</span><span class="p">;</span>
 
 <span class="n">uv_timer_init</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">timer_req</span><span class="p">);</span>
@@ -87,10 +88,13 @@ Timers can be stopped at any time.</p>
 </div>
 <p>will start a repeating timer, which first starts 5 seconds (the <tt class="docutils literal"><span class="pre">timeout</span></tt>) after the execution
 of <tt class="docutils literal"><span class="pre">uv_timer_start</span></tt>, then repeats every 2 seconds (the <tt class="docutils literal"><span class="pre">repeat</span></tt>). Use:</p>
+<p>此例的代码将启动一个周期性计时器，首次调用是在执行 <tt class="docutils literal"><span class="pre">uv_timer_start</span></tt> 之后的5秒
+(由 <tt class="docutils literal"><span class="pre">timeout</span></tt> 指定).然后每间隔2秒(由 <tt class="docutils literal"><span class="pre">repeat</span></tt> 参数指定)再执行一次。通过调用:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="n">uv_timer_stop</span><span class="p">(</span><span class="o">&amp;</span><span class="n">timer_req</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>to stop the timer. This can be used safely from within the callback as well.</p>
+<p>来停止计时器。这个函数在 <tt class="docutils literal"><span class="pre">callback</span></tt> 函数内部调用是安全的。</p>
 <p>The repeat interval can be modified at any time with:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="n">uv_timer_set_repeat</span><span class="p">(</span><span class="n">uv_timer_t</span> <span class="o">*</span><span class="n">timer</span><span class="p">,</span> <span class="kt">int64_t</span> <span class="n">repeat</span><span class="p">);</span>
 </pre></div>
@@ -104,6 +108,16 @@ a timer callback, it means:</p>
 the old repeat interval will be used once more before the timer switches to
 the new interval.</li>
 </ul>
+<p>你可以在任何时候对计时器的重复周期进行修改，调用:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="n">uv_timer_set_repeat</span><span class="p">(</span><span class="n">uv_timer_t</span> <span class="o">*</span><span class="n">timer</span><span class="p">,</span> <span class="kt">int64_t</span> <span class="n">repeat</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>修改将在 <strong>恰当的时刻</strong> (when possible) 生效。如果这个函数是在某个计时器回调函数
+内部调用的，那么:</p>
+<ul class="simple">
+<li>如果计时器是非周期性触发的，则计时器已经停止。需要再次调用 <tt class="docutils literal"><span class="pre">uv_timer_start</span></tt> 来启动。</li>
+<li>如果计时器是周期性触发的，则下一次的超时时间已经被安排过了，下一次触发的时间仍然是修改前的周期决定的。</li>
+</ul>
 <p>The utility function:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="kt">int</span> <span class="n">uv_timer_again</span><span class="p">(</span><span class="n">uv_timer_t</span> <span class="o">*</span><span class="p">)</span>
 </pre></div>
@@ -112,312 +126,25 @@ the new interval.</li>
 and then starting it with both initial <tt class="docutils literal"><span class="pre">timeout</span></tt> and <tt class="docutils literal"><span class="pre">repeat</span></tt> set to the
 old <tt class="docutils literal"><span class="pre">repeat</span></tt> value. If the timer hasn&#8217;t been started it fails (error code
 <tt class="docutils literal"><span class="pre">UV_EINVAL</span></tt>) and returns -1.</p>
-<p>An actual timer example is in the <a class="reference internal" href="utilities-zh.html#reference-count"><em>reference count section</em></a>.</p>
+<p>辅助函数:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">int</span> <span class="n">uv_timer_again</span><span class="p">(</span><span class="n">uv_timer_t</span> <span class="o">*</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>只适合周期性触发的计时器，它的作用相当于停止计时器，然后再将 <tt class="docutils literal"><span class="pre">timeout</span></tt> 和
+<tt class="docutils literal"><span class="pre">repeat</span></tt> 都设置为原来的 <tt class="docutils literal"><span class="pre">repeat</span></tt> 的值，并启动之。如果启动时还没有启动，那么它会以 <tt class="docutils literal"><span class="pre">UV_EINVAL</span></tt> 错误码宣告失败并返回 -1.</p>
+<p>An actual timer example is in the <a class="reference internal" href="#reference-count"><em>reference count section</em></a>.</p>
+<p>一个真实的计时器实例参见 <a class="reference internal" href="#reference-count"><em>reference count section</em></a>.</p>
+</div>
+<div class="section" id="watcher-check-prepare-watchers">
+<h2>检查和准备watcher Check &amp; Prepare watchers<a class="headerlink" href="#watcher-check-prepare-watchers" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
 </div>
 <div class="section" id="external-i-o-with-polling">
 <h2>External I/O with polling<a class="headerlink" href="#external-i-o-with-polling" title="Permalink to this headline">¶</a></h2>
-<p>Usually third-party libraries will handle their own I/O, and keep track of
-their sockets and other files internally. In this case it isn&#8217;t possible to use
-the standard stream I/O operations, but the library can still be integrated
-into the libuv event loop. All that is required is that the library allow you
-to access the underlying file descriptors and provide functions that process
-tasks in small increments as decided by your application. Some libraries though
-will not allow such access, providing only a standard blocking function which
-will perform the entire I/O transaction and only then return. It is unwise to
-use these in the event loop thread, use the <a class="reference internal" href="threads.html#libuv-work-queue"><em>libuv work queue</em></a> instead. Of
-course this will also mean losing granular control on the library.</p>
-<p>The <tt class="docutils literal"><span class="pre">uv_poll</span></tt> section of libuv simply watches file descriptors using the
-operating system notification mechanism. In some sense, all the I/O operations
-that libuv implements itself are also backed by <tt class="docutils literal"><span class="pre">uv_poll</span></tt> like code. Whenever
-the OS notices a change of state in file descriptors being polled, libuv will
-invoke the associated callback.</p>
-<p>Here we will walk through a simple download manager that will use <a class="reference external" href="http://curl.haxx.se/libcurl/">libcurl</a> to
-download files. Rather than give all control to libcurl, we&#8217;ll instead be
-using the libuv event loop, and use the non-blocking, async <a class="reference external" href="http://curl.haxx.se/libcurl/c/libcurl-multi.html">multi</a> interface to
-progress with the download whenever libuv notifies of I/O readiness.</p>
-<p class="rubric">uvwget/main.c - The setup</p>
-<div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33
-34
-35</pre></div></td><td class="code"><div class="highlight"><pre><span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;sys/select.h&gt;</span>
-<span class="cp">#include &lt;uv.h&gt;</span>
-<span class="cp">#include &lt;curl/curl.h&gt;</span>
-
-<span class="n">uv_loop_t</span> <span class="o">*</span><span class="n">loop</span><span class="p">;</span>
-<span class="hll"><span class="n">CURLM</span> <span class="o">*</span><span class="n">curl_handle</span><span class="p">;</span>
-</span><span class="n">uv_timer_t</span> <span class="n">timeout</span><span class="p">;</span>
-
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">loop</span> <span class="o">=</span> <span class="n">uv_default_loop</span><span class="p">();</span>
-
-    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-
-    <span class="k">if</span> <span class="p">(</span><span class="n">curl_global_init</span><span class="p">(</span><span class="n">CURL_GLOBAL_ALL</span><span class="p">))</span> <span class="p">{</span>
-        <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Could not init cURL</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
-
-<span class="hll">    <span class="n">uv_timer_init</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">timeout</span><span class="p">);</span>
-</span>
-    <span class="n">curl_handle</span> <span class="o">=</span> <span class="n">curl_multi_init</span><span class="p">();</span>
-<span class="hll">    <span class="n">curl_multi_setopt</span><span class="p">(</span><span class="n">curl_handle</span><span class="p">,</span> <span class="n">CURLMOPT_SOCKETFUNCTION</span><span class="p">,</span> <span class="n">handle_socket</span><span class="p">);</span>
-</span><span class="hll">    <span class="n">curl_multi_setopt</span><span class="p">(</span><span class="n">curl_handle</span><span class="p">,</span> <span class="n">CURLMOPT_TIMERFUNCTION</span><span class="p">,</span> <span class="n">start_timeout</span><span class="p">);</span>
-</span>
-    <span class="k">while</span> <span class="p">(</span><span class="n">argc</span><span class="o">--</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">add_download</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">argc</span><span class="p">],</span> <span class="n">argc</span><span class="p">);</span>
-    <span class="p">}</span>
-
-    <span class="n">uv_run</span><span class="p">(</span><span class="n">loop</span><span class="p">);</span>
-    <span class="n">curl_multi_cleanup</span><span class="p">(</span><span class="n">curl_handle</span><span class="p">);</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-</td></tr></table></div>
-<p>The way each library is integrated with libuv will vary. In the case of
-libcurl, we can register two callbacks. The socket callback <tt class="docutils literal"><span class="pre">handle_socket</span></tt>
-is invoked whenever the state of a socket changes and we have to start polling
-it. <tt class="docutils literal"><span class="pre">start_timeout</span></tt> is called by libcurl to notify us of the next timeout
-interval, after which we should drive libcurl forward regardless of I/O status.
-This is so that libcurl can handle errors or do whatever else is required to
-get the download moving.</p>
-<p>Our downloader is to be invoked as:</p>
-<div class="highlight-c"><pre>$ ./uvwget [url1] [url2] ...</pre>
-</div>
-<p>So we add each argument as an URL</p>
-<p class="rubric">uvwget/main.c - Adding urls</p>
-<div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-11
-12
-13
-14
-15
-16
-17</pre></div></td><td class="code"><div class="highlight"><pre><span class="kt">void</span> <span class="nf">add_download</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">url</span><span class="p">,</span> <span class="kt">int</span> <span class="n">num</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kt">char</span> <span class="n">filename</span><span class="p">[</span><span class="mi">50</span><span class="p">];</span>
-    <span class="n">sprintf</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;%d.download&quot;</span><span class="p">,</span> <span class="n">num</span><span class="p">);</span>
-    <span class="kt">FILE</span> <span class="o">*</span><span class="n">file</span><span class="p">;</span>
-
-    <span class="n">file</span> <span class="o">=</span> <span class="n">fopen</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;w&quot;</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">file</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Error opening %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">);</span>
-        <span class="k">return</span><span class="p">;</span>
-    <span class="p">}</span>
-
-    <span class="n">CURL</span> <span class="o">*</span><span class="n">handle</span> <span class="o">=</span> <span class="n">curl_easy_init</span><span class="p">();</span>
-    <span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">CURLOPT_WRITEDATA</span><span class="p">,</span> <span class="n">file</span><span class="p">);</span>
-    <span class="n">curl_easy_setopt</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">CURLOPT_URL</span><span class="p">,</span> <span class="n">url</span><span class="p">);</span>
-<span class="hll">    <span class="n">curl_multi_add_handle</span><span class="p">(</span><span class="n">curl_handle</span><span class="p">,</span> <span class="n">handle</span><span class="p">);</span>
-</span>    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Added download %s -&gt; %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">filename</span><span class="p">);</span>
-<span class="p">}</span>
-</pre></div>
-</td></tr></table></div>
-<p>We let libcurl directly write the data to a file, but much more is possible if
-you so desire.</p>
-<p><tt class="docutils literal"><span class="pre">start_timeout</span></tt> will be called immediately the first time by libcurl, so
-things are set in motion. This simply starts a libuv <a class="reference external" href="Timers">timer</a> which
-drives <tt class="docutils literal"><span class="pre">curl_multi_socket_action</span></tt> with <tt class="docutils literal"><span class="pre">CURL_SOCKET_TIMEOUT</span></tt> whenever it
-times out. <tt class="docutils literal"><span class="pre">curl_multi_socket_action</span></tt> is what drives libcurl, and what we
-call whenever sockets change state. But before we go into that, we need to poll
-on sockets whenever <tt class="docutils literal"><span class="pre">handle_socket</span></tt> is called.</p>
-<p class="rubric">uvwget/main.c - Setting up polling</p>
-<div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33</pre></div></td><td class="code"><div class="highlight"><pre><span class="kt">int</span> <span class="nf">handle_socket</span><span class="p">(</span><span class="n">CURL</span> <span class="o">*</span><span class="n">easy</span><span class="p">,</span> <span class="n">curl_socket_t</span> <span class="n">s</span><span class="p">,</span> <span class="kt">int</span> <span class="n">action</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">userp</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">socketp</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">uv_poll_t</span> <span class="o">*</span><span class="n">poll_fd</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">action</span> <span class="o">==</span> <span class="n">CURL_POLL_IN</span> <span class="o">||</span> <span class="n">action</span> <span class="o">==</span> <span class="n">CURL_POLL_OUT</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">socketp</span><span class="p">)</span> <span class="p">{</span>
-            <span class="n">poll_fd</span> <span class="o">=</span> <span class="p">(</span><span class="n">uv_poll_t</span><span class="o">*</span><span class="p">)</span> <span class="n">socketp</span><span class="p">;</span>
-        <span class="p">}</span>
-        <span class="k">else</span> <span class="p">{</span>
-            <span class="n">poll_fd</span> <span class="o">=</span> <span class="p">(</span><span class="n">uv_poll_t</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">uv_poll_t</span><span class="p">));</span>
-<span class="hll">            <span class="n">uv_poll_init</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">poll_fd</span><span class="p">,</span> <span class="n">s</span><span class="p">);</span>
-</span>        <span class="p">}</span>
-<span class="hll">        <span class="n">curl_multi_assign</span><span class="p">(</span><span class="n">curl_handle</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="n">poll_fd</span><span class="p">);</span>
-</span>    <span class="p">}</span>
-
-    <span class="k">switch</span> <span class="p">(</span><span class="n">action</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">case</span> <span class="n">CURL_POLL_IN</span>:
-<span class="hll">            <span class="n">uv_poll_start</span><span class="p">(</span><span class="n">poll_fd</span><span class="p">,</span> <span class="n">UV_READABLE</span><span class="p">,</span> <span class="n">curl_perform</span><span class="p">);</span>
-</span>            <span class="k">break</span><span class="p">;</span>
-        <span class="k">case</span> <span class="n">CURL_POLL_OUT</span>:
-<span class="hll">            <span class="n">uv_poll_start</span><span class="p">(</span><span class="n">poll_fd</span><span class="p">,</span> <span class="n">UV_WRITABLE</span><span class="p">,</span> <span class="n">curl_perform</span><span class="p">);</span>
-</span>            <span class="k">break</span><span class="p">;</span>
-        <span class="k">case</span> <span class="n">CURL_POLL_REMOVE</span>:
-            <span class="k">if</span> <span class="p">(</span><span class="n">socketp</span><span class="p">)</span> <span class="p">{</span>
-<span class="hll">                <span class="n">uv_poll_stop</span><span class="p">((</span><span class="n">uv_poll_t</span><span class="o">*</span><span class="p">)</span> <span class="n">socketp</span><span class="p">);</span>
-</span>                <span class="n">uv_close</span><span class="p">((</span><span class="n">uv_handle_t</span><span class="o">*</span><span class="p">)</span> <span class="n">socketp</span><span class="p">,</span> <span class="p">(</span><span class="n">uv_close_cb</span><span class="p">)</span> <span class="n">free</span><span class="p">);</span>
-                <span class="n">curl_multi_assign</span><span class="p">(</span><span class="n">curl_handle</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-            <span class="p">}</span>
-            <span class="k">break</span><span class="p">;</span>
-        <span class="nl">default:</span>
-            <span class="n">abort</span><span class="p">();</span>
-    <span class="p">}</span>
-
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-</td></tr></table></div>
-<p>We are interested in the socket fd <tt class="docutils literal"><span class="pre">s</span></tt>, and the <tt class="docutils literal"><span class="pre">action</span></tt>. For every socket
-we create a <tt class="docutils literal"><span class="pre">uv_poll_t</span></tt> handle if it doesn&#8217;t exist, and associate it with the
-socket using <tt class="docutils literal"><span class="pre">curl_multi_assign</span></tt>. This way <tt class="docutils literal"><span class="pre">socketp</span></tt> points to it whenever
-the callback is invoked.</p>
-<p>In the case that the download is done or fails, libcurl requests removal of the
-poll. So we stop and free the poll handle.</p>
-<p>Depending on what events libcurl wishes to watch for, we start polling with
-<tt class="docutils literal"><span class="pre">UV_READABLE</span></tt> or <tt class="docutils literal"><span class="pre">UV_WRITABLE</span></tt>. Now libuv will invoke the poll callback
-whenever the socket is ready for reading or writing. Calling <tt class="docutils literal"><span class="pre">uv_poll_start</span></tt>
-multiple times on the same handle is acceptable, it will just update the events
-mask with the new value. <tt class="docutils literal"><span class="pre">curl_perform</span></tt> is the crux of this program.</p>
-<p class="rubric">uvwget/main.c - Setting up polling</p>
-<div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29</pre></div></td><td class="code"><div class="highlight"><pre><span class="kt">void</span> <span class="nf">curl_perform</span><span class="p">(</span><span class="n">uv_poll_t</span> <span class="o">*</span><span class="n">req</span><span class="p">,</span> <span class="kt">int</span> <span class="n">status</span><span class="p">,</span> <span class="kt">int</span> <span class="n">events</span><span class="p">)</span> <span class="p">{</span>
-<span class="hll">    <span class="n">uv_timer_stop</span><span class="p">(</span><span class="o">&amp;</span><span class="n">timeout</span><span class="p">);</span>
-</span>    <span class="kt">int</span> <span class="n">running_handles</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="hll">    <span class="k">if</span> <span class="p">(</span><span class="n">events</span> <span class="o">&amp;</span> <span class="n">UV_READABLE</span><span class="p">)</span> <span class="n">flags</span> <span class="o">|=</span> <span class="n">CURL_CSELECT_IN</span><span class="p">;</span>
-</span><span class="hll">    <span class="k">if</span> <span class="p">(</span><span class="n">events</span> <span class="o">&amp;</span> <span class="n">UV_WRITABLE</span><span class="p">)</span> <span class="n">flags</span> <span class="o">|=</span> <span class="n">CURL_CSELECT_OUT</span><span class="p">;</span>
-</span>
-<span class="hll">    <span class="n">curl_multi_socket_action</span><span class="p">(</span><span class="n">curl_handle</span><span class="p">,</span> <span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">running_handles</span><span class="p">);</span>
-</span>
-    <span class="kt">char</span> <span class="o">*</span><span class="n">done_url</span><span class="p">;</span>
-
-    <span class="n">CURLMsg</span> <span class="o">*</span><span class="n">message</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">pending</span><span class="p">;</span>
-<span class="hll">    <span class="k">while</span> <span class="p">((</span><span class="n">message</span> <span class="o">=</span> <span class="n">curl_multi_info_read</span><span class="p">(</span><span class="n">curl_handle</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pending</span><span class="p">)))</span> <span class="p">{</span>
-</span>        <span class="k">switch</span> <span class="p">(</span><span class="n">message</span><span class="o">-&gt;</span><span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
-<span class="hll">            <span class="k">case</span> <span class="n">CURLMSG_DONE</span>:
-</span>                <span class="n">curl_easy_getinfo</span><span class="p">(</span><span class="n">message</span><span class="o">-&gt;</span><span class="n">easy_handle</span><span class="p">,</span> <span class="n">CURLINFO_EFFECTIVE_URL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">done_url</span><span class="p">);</span>
-                <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s DONE</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">done_url</span><span class="p">);</span>
-
-                <span class="n">curl_multi_remove_handle</span><span class="p">(</span><span class="n">curl_handle</span><span class="p">,</span> <span class="n">message</span><span class="o">-&gt;</span><span class="n">easy_handle</span><span class="p">);</span>
-                <span class="n">curl_easy_cleanup</span><span class="p">(</span><span class="n">message</span><span class="o">-&gt;</span><span class="n">easy_handle</span><span class="p">);</span>
-
-                <span class="k">break</span><span class="p">;</span>
-            <span class="nl">default:</span>
-                <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;CURLMSG default</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
-                <span class="n">abort</span><span class="p">();</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-</td></tr></table></div>
-<p>The first thing we do is to stop the timer, since there has been some progress
-in the interval. Then depending on what event triggered the callback, we inform
-libcurl of the same. Then we call <tt class="docutils literal"><span class="pre">curl_multi_socket_action</span></tt> with the socket
-that progressed and the flags informing about what events happened. At this
-point libcurl does all of its internal tasks in small increments, and will
-attempt to return as fast as possible, which is exactly what an evented program
-wants in its main thread. libcurl keeps queueing messages into its own queue
-about transfer progress. In our case we are only interested in transfers that
-are completed. So we extract these messages, and clean up handles whose
-transfers are done.</p>
-</div>
-<div class="section" id="check-prepare-watchers">
-<h2>Check &amp; Prepare watchers<a class="headerlink" href="#check-prepare-watchers" title="Permalink to this headline">¶</a></h2>
 <p>TODO</p>
 </div>
 <div class="section" id="loading-libraries">
-<h2>Loading libraries<a class="headerlink" href="#loading-libraries" title="Permalink to this headline">¶</a></h2>
+<h2>加载动态链接库 Loading libraries<a class="headerlink" href="#loading-libraries" title="Permalink to this headline">¶</a></h2>
 <p>libuv provides a cross platform API to dynamically load <a class="reference external" href="http://en.wikipedia.org/wiki/Shared_library#Shared_libraries">shared libraries</a>.
 This can be used to implement your own plugin/extension/module system and is
 used by node.js to implement <tt class="docutils literal"><span class="pre">require()</span></tt> support for bindings. The usage is
@@ -425,7 +152,13 @@ quite simple as long as your library exports the right symbols. Be careful with
 sanity and security checks when loading third party code, otherwise your
 program will behave unpredicatably. This example implements a very simple
 plugin system which does nothing except print the name of the plugin.</p>
+<p>libuv提供了一套跨平台的动态加载共享库 <a class="reference external" href="http://en.wikipedia.org/wiki/Shared_library#Shared_libraries">shared libraries</a> 的API。
+可以用于实现你自己的插件、扩展和模块系统。在node.js中，用于支持接口绑定的 <tt class="docutils literal"><span class="pre">requre()</span></tt> 函数
+的实现就用到这些API。只要你的动态库导出了正确的符号表，API使用起来相当简单。
+当你加载第三方代码时，要做好安全检查工作，否则你的程序可能表现一些无法预料的行为。
+实例中实现了一非常简单的插件系统，它除了会打印插件的名称之外，神马都没有做。</p>
 <p>Let us first look at the interface provided to plugin authors.</p>
+<p>首先我们看一个提供给插件作者的接口吧。</p>
 <p class="rubric">plugin/plugin.h</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
@@ -453,7 +186,9 @@ plugin system which does nothing except print the name of the plugin.</p>
 </pre></div>
 </td></tr></table></div>
 <p>You can similarly add more functions that plugin authors can use to do useful
-things in your application <a class="footnote-reference" href="#id3" id="id1">[1]</a>. A sample plugin using this API is:</p>
+things in your application . A sample plugin using this API is:</p>
+<p>你可以在你的应用之中类似地加入更多的函数，以便于插件作者用来未完成更多有用的事情[#]_。
+下面是一个使用了这个API的简单插件:</p>
 <p class="rubric">plugin/hello.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
@@ -469,13 +204,17 @@ things in your application <a class="footnote-reference" href="#id3" id="id1">[1
 <p>Our interface defines that all plugins should have an <tt class="docutils literal"><span class="pre">initialize</span></tt> function
 which will be called by the application. This plugin is compiled as a shared
 library and can be loaded by running our application:</p>
-<div class="highlight-c"><pre>$ ./plugin libhello.dylib
+<p>我们的接口定义要求所有的插件都必须具备一个 <tt class="docutils literal"><span class="pre">initialize</span></tt> 函数，以便于应用程序调用。
+这个插件要以动态链接库的形式进行编译，才可以被我们的应用加载运行。</p>
+<blockquote>
+<div>$ ./plugin libhello.dylib
 Loading libhello.dylib
-Registered plugin "Hello World!"</pre>
-</div>
+Registered plugin &#8220;Hello World!&#8221;</div></blockquote>
 <p>This is done by using <tt class="docutils literal"><span class="pre">uv_dlopen</span></tt> to first load the shared library
 <tt class="docutils literal"><span class="pre">libhello.dylib</span></tt>. Then we get access to the <tt class="docutils literal"><span class="pre">initialize</span></tt> function using
 <tt class="docutils literal"><span class="pre">uv_dlsym</span></tt> and invoke it.</p>
+<p>上述工作是这样实现的，首先使用 <tt class="docutils literal"><span class="pre">uv_dlopen</span></tt> 加载动态链接库 <tt class="docutils literal"><span class="pre">libhello.dylib</span></tt>,
+然后利用 <tt class="docutils literal"><span class="pre">uv_dlsym</span></tt> 函数获取 <tt class="docutils literal"><span class="pre">initialize</span></tt> 函数的入口，再调用之。</p>
 <p class="rubric">plugin/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -539,12 +278,16 @@ Registered plugin "Hello World!"</pre>
 <p><tt class="docutils literal"><span class="pre">uv_dlopen</span></tt> expects a path to the shared library and sets the opaque
 <tt class="docutils literal"><span class="pre">uv_lib_t</span></tt> pointer. It returns 0 on success, -1 on error. Use <tt class="docutils literal"><span class="pre">uv_dlerror</span></tt>
 to get the error message.</p>
+<p><tt class="docutils literal"><span class="pre">uv_dlopen</span></tt> 期待一个共享库的路径，并会设置一个不透明的 <tt class="docutils literal"><span class="pre">uv_lib_t</span></tt> 结构体指针.
+如果成功则返回0，错误则返回-1。利用 <tt class="docutils literal"><span class="pre">uv_dlerror</span></tt> 获取错误消息。</p>
 <p><tt class="docutils literal"><span class="pre">uv_dlsym</span></tt> stores a pointer to the symbol in the second argument in the third
 argument. <tt class="docutils literal"><span class="pre">init_plugin_function</span></tt> is a function pointer to the sort of
 function we are looking for in the application&#8217;s plugins.</p>
+<p><tt class="docutils literal"><span class="pre">uv_dlsym</span></tt> 会将指向第二个参数要求的 symbol 的指针保存到第三个参数中。
+<tt class="docutils literal"><span class="pre">init_plugin_function</span></tt> 是一个函数指针，其类型正是我们在应用程序的插件中查找的函数的类型。</p>
 </div>
-<div class="section" id="idle-watcher-pattern">
-<h2>Idle watcher pattern<a class="headerlink" href="#idle-watcher-pattern" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="idle-watcher-idle-watcher-pattern">
+<h2>Idle Watcher模式 Idle watcher pattern<a class="headerlink" href="#idle-watcher-idle-watcher-pattern" title="Permalink to this headline">¶</a></h2>
 <p>The callbacks of idle watchers are only invoked when the event loop has no
 other pending events. In such a situation they are invoked once every iteration
 of the loop. The idle callback can be used to perform some very low priority
@@ -556,6 +299,15 @@ download. If the TCP socket is still being established and no other events are
 present your event loop will pause (<strong>block</strong>), which means your progress bar
 will freeze and the user will think the application crashed. In such a case
 queue up and idle watcher to keep the UI operational.</p>
+<p>Idle（空闲） Watcher 的回调函数只有在事件循环中没有其它未处理事件时才会被调用。
+在这种情形下，它们会在每次循环时被调用一次。空闲回调函数可以用于执行一些优先级
+非常低的任务。比如，你可以在空闲回调中发送应用程序每日的性能摘要以供开发人员分
+析，或者使用应用程序的CPU进行SETI计算:) Idle Watcher对于GUI也非常有用，比如你
+利用事件循环来进行文件下载，如果TCP连接正在建立时，没有其它事件需要处理时，
+事件循环会暂停(<strong>block</strong>)， 这就意味着你的进度条停滞不前，用户会以为程序挂了。
+这种情况下，利用向队列丢入一个Idle watcher，使得UI是可操作的。</p>
+<p><a class="reference external" href="mailto:SETI&#37;&#52;&#48;home">SETI<span>&#64;</span>home</a> 是一项利用全球联网的计算机共同搜寻地外文明的科学实验计划，</p>
+<p>“SETI”是英文Search for Extraterrestrial Intelligence（搜寻外星智能）的缩写。</p>
 <p class="rubric">idle-compute/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -591,6 +343,9 @@ events we are interested in. <tt class="docutils literal"><span class="pre">crun
 until the user types something and presses Return. Then it will be interrupted
 for a brief amount as the loop deals with the input data, after which it will
 keep calling the idle callback again.</p>
+<p>这里我们初始化一个idle watcher并在我们真正感兴趣的事件之后丢入队列中。 <tt class="docutils literal"><span class="pre">crunch_away</span></tt>
+会被周期性的调用，直到用户输入一些东西并回车。然后事件循环需要处理用户输入的数据，
+它会被中断一小会，然后它又被Idle回调函数周期性的调用。</p>
 <p class="rubric">idle-compute/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
@@ -613,7 +368,7 @@ keep calling the idle callback again.</p>
 </td></tr></table></div>
 </div>
 <div class="section" id="event-loop-reference-count">
-<span id="reference-count"></span><h2>Event loop reference count<a class="headerlink" href="#event-loop-reference-count" title="Permalink to this headline">¶</a></h2>
+<span id="reference-count"></span><h2>事件循环的引用计数 Event loop reference count<a class="headerlink" href="#event-loop-reference-count" title="Permalink to this headline">¶</a></h2>
 <p>The event loop only runs as long as there are active watchers. This system
 works by having every watcher increase the reference count of the event loop
 when it is started and decreasing the reference count when stopped. It is also
@@ -622,8 +377,11 @@ possible to manually change the reference count of handles using:</p>
 <span class="kt">void</span> <span class="n">uv_unref</span><span class="p">(</span><span class="n">uv_handle_t</span><span class="o">*</span><span class="p">);</span>
 </pre></div>
 </div>
+<p>事件循环只有在有活动的watcher时才会进行。每个watcher启动时会增加事件循环的引用计数，
+并在停止的时候减小引用计数。也可以利用这两个函数来手动改变句柄的引用计数。</p>
 <p>These functions can be used to allow a loop to exit even when a watcher is
 active or to use custom objects to keep the loop alive.</p>
+<p>这俩函数可以允许还有活动的watcher时让循环退出，或者在一些自定义的对象中阻止循环的退出。</p>
 <p>The former can be used with interval timers. You might have a garbage collector
 which runs every X seconds, or your network service might send a heartbeat to
 others periodically, but you don&#8217;t want to have to stop them along all clean
@@ -631,9 +389,16 @@ exit paths or error scenarios. Or you want the program to exit when all your
 other watchers are done. In that case just unref the timer immediately after
 creation so that if it is the only watcher running then <tt class="docutils literal"><span class="pre">uv_run</span></tt> will still
 exit.</p>
+<p>前一种用法可以和周期性计时器一起使用。你可能需要一个每隔几秒运行一次的垃圾收集器，
+或者你的网络服务需要周期地向外发送心跳，但是你并不希望得在所有的安全地或者错误退
+出的执行路径中停止它们才能让人你程序退出。或者你希望当你程序中其它的Watcher都
+结束的时候，程序能够自动退出。这种些场景中，你只要在创建计时器之后unref它一下，
+这样当只有这一个watcher还在运行的话， <tt class="docutils literal"><span class="pre">uv_run</span></tt> 就会退出。</p>
 <p>The later is used in node.js where some libuv methods are being bubbled up to
 the JS API. A <tt class="docutils literal"><span class="pre">uv_handle_t</span></tt> (the superclass of all watchers) is created per
 JS object and can be ref/unrefed.</p>
+<p>后一种用法在node.js中使用了，出现在那些从libuv中提升的JS API中。 <tt class="docutils literal"><span class="pre">uv_handle_t</span></tt>
+（是所有watcher的父类）可以被引用或者取消引用。</p>
 <p class="rubric">ref-timer/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -673,14 +438,21 @@ JS object and can be ref/unrefed.</p>
 <p>We initialize the garbage collector timer, then immediately <tt class="docutils literal"><span class="pre">unref</span></tt> it.
 Observe how after 9 seconds, when the fake job is done, the program
 automatically exits, even though the garbage collector is still running.</p>
+<p>例中我们初始化了一个垃圾回收的计时器，然后立即对它执行了 <tt class="docutils literal"><span class="pre">unref</span></tt> 操作。
+可以观察到9秒之后，当fake任务完成时，程序就自动结束了，虽然此刻垃圾收集器
+仍在运行中。</p>
 </div>
 <div class="section" id="passing-data-to-worker-thread">
-<span id="baton"></span><h2>Passing data to worker thread<a class="headerlink" href="#passing-data-to-worker-thread" title="Permalink to this headline">¶</a></h2>
+<span id="baton"></span><h2>向工作者线程传递数据 Passing data to worker thread<a class="headerlink" href="#passing-data-to-worker-thread" title="Permalink to this headline">¶</a></h2>
 <p>When using <tt class="docutils literal"><span class="pre">uv_queue_work</span></tt> you&#8217;ll usually need to pass complex data through
 to the worker thread. The solution is to use a <tt class="docutils literal"><span class="pre">struct</span></tt> and set
 <tt class="docutils literal"><span class="pre">uv_work_t.data</span></tt> to point to it. A slight variation is to have the
-<tt class="docutils literal"><span class="pre">uv_work_t</span></tt> itself as the first member of this struct (called a baton <a class="footnote-reference" href="#id4" id="id2">[2]</a>).
+<tt class="docutils literal"><span class="pre">uv_work_t</span></tt> itself as the first member of this struct (called a baton).
 This allows cleaning up the work request and all the data in one free call.</p>
+<p>在使用 <tt class="docutils literal"><span class="pre">uv_queue_work</span></tt> 时，你经常需要向工作者线程传递一些复杂的数据。
+解决的方法是使用一个 <tt class="docutils literal"><span class="pre">struct</span></tt> 并将其地址设置到 <tt class="docutils literal"><span class="pre">uv_work_t.data</span></tt>. 也可以做下小
+的调整，将 <tt class="docutils literal"><span class="pre">uv_work_t</span></tt> 结构作为你自己结构体的每一个成员（称这为拉力棒 baton <a class="footnote-reference" href="#id2" id="id1">[1]</a>），
+这样就可以在清理过程中使用一个free调用来释放work request和所有的数据了。</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
 3
@@ -712,7 +484,9 @@ This allows cleaning up the work request and all the data in one free call.</p>
 </pre></div>
 </td></tr></table></div>
 <p>Here we create the baton and queue the task.</p>
+<p>这里我们创建了一个baton并将之丢入工作池队列。</p>
 <p>Now the task function can extract the data it needs:</p>
+<p>此时任务函数可以拿到它想要的数据了:</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
@@ -741,9 +515,9 @@ This allows cleaning up the work request and all the data in one free call.</p>
 </pre></div>
 </td></tr></table></div>
 <p>We then free the baton which also frees the watcher.</p>
-</div>
-<div class="section" id="tty">
-<h2>TTY<a class="headerlink" href="#tty" title="Permalink to this headline">¶</a></h2>
+<p>最后我们释放baton的时候，也同时将watcher一起释放了。</p>
+<p>控制台 TTY
+&#8212;</p>
 <p>Text terminals have supported basic formatting for a long time, with a <a class="reference external" href="http://en.wikipedia.org/wiki/ANSI_escape_sequences">pretty
 standardised</a> command set. This formatting is often used by programs to
 improve the readability of terminal output. For example <tt class="docutils literal"><span class="pre">grep</span> <span class="pre">--colour</span></tt>.
@@ -751,6 +525,11 @@ libuv provides the <tt class="docutils literal"><span class="pre">uv_tty_t</span
 implement the ANSI escape codes across all platforms. By this I mean that libuv
 converts ANSI codes to the Windows equivalent, and provides functions to get
 terminal information.</p>
+<p>文本终端通过 <a class="reference external" href="http://en.wikipedia.org/wiki/ANSI_escape_sequences">pretty standardised</a> 命令集来支持基本的格式化操作已经很久了。这种
+格式化经常被程序用来提升终端输出内容的可读性。比如， <tt class="docutils literal"><span class="pre">grep</span> <span class="pre">--colour</span></tt>. libuv
+提供的 <tt class="docutils literal"><span class="pre">uv_tty_t</span></tt> 抽象（抽象为流）和相关的函数，实现了ANSI转义码，并且兼容所有
+平台。libuv 能够将ANSI转义码转换到Windows平台上对应的实现，并提供函数获取关于终
+端的信息（比如标准、屏宽等）。</p>
 <p>The first thing to do is to initialize a <tt class="docutils literal"><span class="pre">uv_tty_t</span></tt> with the file descriptor
 it reads/writes from. This is achieved with:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="kt">int</span> <span class="n">uv_tty_init</span><span class="p">(</span><span class="n">uv_loop_t</span><span class="o">*</span><span class="p">,</span> <span class="n">uv_tty_t</span><span class="o">*</span><span class="p">,</span> <span class="n">uv_file</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">readable</span><span class="p">)</span>
@@ -758,9 +537,16 @@ it reads/writes from. This is achieved with:</p>
 </div>
 <p>If <tt class="docutils literal"><span class="pre">readable</span></tt> is false, <tt class="docutils literal"><span class="pre">uv_write</span></tt> calls to this stream will be
 <strong>blocking</strong>.</p>
+<p>首先要做的是使用一个读写的文件描述符来初始化 <tt class="docutils literal"><span class="pre">uv_tty_t</span></tt> ，（译注：这里的文件句柄应该是由uv_tty_t来读写吧？） 需要调用函数:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">int</span> <span class="n">uv_tty_init</span><span class="p">(</span><span class="n">uv_loop_t</span><span class="o">*</span><span class="p">,</span> <span class="n">uv_tty_t</span><span class="o">*</span><span class="p">,</span> <span class="n">uv_file</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">readable</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>如果 <tt class="docutils literal"><span class="pre">readable</span></tt> 为 false， 针对这个流的 <tt class="docutils literal"><span class="pre">uv_write</span></tt> 调用将会被 <strong>阻塞</strong>.</p>
 <p>It is then best to <tt class="docutils literal"><span class="pre">uv_tty_set_mode</span></tt> to set the mode to <em>normal</em> (0)
 which enables most TTY formatting, flow-control and other settings. <em>raw</em> mode
 (1) is also supported.</p>
+<p>然后最好通过 <tt class="docutils literal"><span class="pre">uv_tty_set_mode</span></tt> 将模式设置为 <em>normal</em> (0)，这将使得大部分 TTY
+格式化操作，文本流控制和其它设置。 <em>raw</em> 模式也被支持。</p>
 <p>Remember to call <tt class="docutils literal"><span class="pre">uv_tty_reset_mode</span></tt> when your program exits to restore the
 state of the terminal. Just good manners. Another set of good manners is to be
 aware of redirection. If the user redirects the output of your command to
@@ -768,7 +554,12 @@ a file, control sequences should not be written as they impede readability and
 <tt class="docutils literal"><span class="pre">grep</span></tt>. To check if the file descriptor is indeed a TTY, call
 <tt class="docutils literal"><span class="pre">uv_guess_handle</span></tt> with the file descriptor and compare the return value with
 <tt class="docutils literal"><span class="pre">UV_TTY</span></tt>.</p>
+<p>记得在你的程序退出时调用 <tt class="docutils literal"><span class="pre">uv_tty_reset_mode</span></tt> 以恢复终端到原始状态。这是个好习
+惯。另外一些惯例是注意重定向。如果用户将你的命令的输出重定向到一个文件，那么控制
+序列就不应该被输出，因为这会妨碍阅读和 <tt class="docutils literal"><span class="pre">grep</span></tt>. 如果要检查一个文件描述符确实是
+一个TTY，可能将文件描述符输入 <tt class="docutils literal"><span class="pre">uv_guess_handle</span></tt> 并检查返回值是否为 <tt class="docutils literal"><span class="pre">UV_TTY</span></tt>.</p>
 <p>Here is a simple example which prints white text on a red background:</p>
+<p>下例将演示如何在终端打印红底白字:</p>
 <p class="rubric">tty/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -833,6 +624,8 @@ a file, control sequences should not be written as they impede readability and
 width and height of the terminal and returns <tt class="docutils literal"><span class="pre">0</span></tt> on success. Here is a small
 program which does some animation using the function and character position
 escape codes.</p>
+<p>最后那个TTY辅助函数 <tt class="docutils literal"><span class="pre">uv_tty_get_winsize</span></tt> ，它是用来获取终端的宽和高的，如果
+返回 <tt class="docutils literal"><span class="pre">0</span></tt> 表示成功。接下来的小程序利用这个函数和字符位置转义码做出一些小动画。</p>
 <p class="rubric">tty-gravity/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -960,20 +753,51 @@ escape codes.</p>
 </tr>
 </tbody>
 </table>
+<p>转义码有这些:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="7%" />
+<col width="93%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">码字</th>
+<th class="head">表意</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><em>2</em> J</td>
+<td>清除部分屏幕内容, 2 指清除整个屏幕的内容</td>
+</tr>
+<tr class="row-odd"><td>H</td>
+<td>移动光标到指定位置, 默认在左上角</td>
+</tr>
+<tr class="row-even"><td><em>n</em> B</td>
+<td>将光标向下移动n行</td>
+</tr>
+<tr class="row-odd"><td><em>n</em> C</td>
+<td>将光标向右移动n列</td>
+</tr>
+<tr class="row-even"><td>m</td>
+<td>Obeys string of display settings, 此例中 green background (40+2), white text (30+7)</td>
+</tr>
+</tbody>
+</table>
 <p>As you can see this is very useful to produce nicely formatted output, or even
 console based arcade games if that tickles your fancy. For fancier control you
 can try <a class="reference external" href="http://www.gnu.org/software/ncurses/ncurses.html">ncurses</a>.</p>
+<p>可以看出这些代码在生成非常美观的格式化输出是非常有用，甚至是让你着迷的基于控制
+台的街机游戏。对于发烧友不妨体验下 <a class="reference external" href="http://www.gnu.org/software/ncurses/ncurses.html">ncurses</a>.</p>
 <hr class="docutils" />
-<table class="docutils footnote" frame="void" id="id3" rules="none">
+<table class="docutils footnote" frame="void" id="id2" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>mfp is My Fancy Plugin</td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id4" rules="none">
+<table class="docutils footnote" frame="void" id="id3" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>I was first introduced to the term baton in this context, in Konstantin
+<tr><td class="label">[2]</td><td>I was first introduced to the term baton in this context, in Konstantin
 Käfer&#8217;s excellent slides on writing node.js bindings &#8211;
 <a class="reference external" href="http://kkaefer.github.com/node-cpp-modules/#baton">http://kkaefer.github.com/node-cpp-modules/#baton</a></td></tr>
 </tbody>
@@ -986,11 +810,7 @@ Käfer&#8217;s excellent slides on writing node.js bindings &#8211;
       <div class="bottomnav">
       
         <p>
-        «&#160;&#160;<a href="multiple.html">Multiple event loops</a>
-        &#160;&#160;::&#160;&#160;
         <a class="uplink" href="index.html">Contents</a>
-        &#160;&#160;::&#160;&#160;
-        <a href="about.html">About</a>&#160;&#160;»
         </p>
 
       </div>

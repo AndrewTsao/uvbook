@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Processes &mdash; An Introduction to libuv</title>
+    <title>进程 Processes &mdash; An Introduction to libuv</title>
     
     <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -30,8 +30,6 @@
     <script type="text/javascript" src="_static/theme_extras.js"></script>
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="top" title="An Introduction to libuv" href="index.html" />
-    <link rel="next" title="Multiple event loops" href="multiple.html" />
-    <link rel="prev" title="Threads" href="threads.html" />
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -50,16 +48,12 @@
   <body>
       <div class="header"><h1 class="heading"><a href="index.html">
           <span>An Introduction to libuv</span></a></h1>
-        <h2 class="heading"><span>Processes</span></h2>
+        <h2 class="heading"><span>进程 Processes</span></h2>
       </div>
       <div class="topnav">
       
         <p>
-        «&#160;&#160;<a href="threads.html">Threads</a>
-        &#160;&#160;::&#160;&#160;
         <a class="uplink" href="index.html">Contents</a>
-        &#160;&#160;::&#160;&#160;
-        <a href="multiple.html">Multiple event loops</a>&#160;&#160;»
         </p>
 
       </div>
@@ -67,26 +61,18 @@
         
         
   <div class="section" id="processes">
-<h1>Processes<a class="headerlink" href="#processes" title="Permalink to this headline">¶</a></h1>
+<h1>进程 Processes<a class="headerlink" href="#processes" title="Permalink to this headline">¶</a></h1>
 <p>libuv offers considerable child process management, abstracting the platform
 differences and allowing communication with the child process using streams or
 named pipes.</p>
-<p>A common idiom in Unix is for every process to do one thing and do it well. In
-such a case, a process often uses multiple child processes to achieve tasks
-(similar to using pipes in shells). A multi-process model with messages
-may also be easier to reason about compared to one with threads and shared
-memory.</p>
-<p>A common refrain against event-based programs is that they cannot take
-advantage of multiple cores in modern computers. In a multi-threaded program
-the kernel can perform scheduling and assign different threads to different
-cores, improving performance. But an event loop has only one thread.  The
-workaround can be to launch multiple processes instead, with each process
-running an event loop, and each process getting assigned to a separate CPU
-core.</p>
-<div class="section" id="spawning-child-processes">
-<h2>Spawning child processes<a class="headerlink" href="#spawning-child-processes" title="Permalink to this headline">¶</a></h2>
+<p>libuv 提供了的子进程管理机制，抽象了不同平台的差异性，子进程之间可以使用流和
+命名管道的来进行通讯。</p>
+<div class="section" id="spawn-spawning-child-processes">
+<h2>Spawn子进程 Spawning child processes<a class="headerlink" href="#spawn-spawning-child-processes" title="Permalink to this headline">¶</a></h2>
 <p>The simplest case is when you simply want to launch a process and know when it
 exits. This is achieved using <tt class="docutils literal"><span class="pre">uv_spawn</span></tt>.</p>
+<p>举个最简单的例子——发起一个进程，然后在进程退出时获得通知。这个任务使用 <tt class="docutils literal"><span class="pre">uv_spawn</span></tt>
+就可以完成。</p>
 <p class="rubric">spawn/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -141,10 +127,17 @@ exits. This is achieved using <tt class="docutils literal"><span class="pre">uv_
 <tt class="docutils literal"><span class="pre">uv_spawn</span></tt> uses <tt class="docutils literal"><span class="pre">execvp</span></tt> internally, there is no need to supply the full
 path. Finally as per underlying conventions, the arguments array <em>has</em> to be
 one larger than the number of arguments, with the last element being <tt class="docutils literal"><span class="pre">NULL</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">uv_process_t</span></tt> 结构体仅仅做为watcher，而所有的选项设置需要借助
+<tt class="docutils literal"><span class="pre">uv_process_options_t</span></tt> 来完成. 如果仅仅只是起动一个进程，你只要设置 <tt class="docutils literal"><span class="pre">file</span></tt> 和
+<tt class="docutils literal"><span class="pre">args</span></tt> 两个字段就足够了。 <tt class="docutils literal"><span class="pre">file</span></tt> 指定需要执行的程序。因为 <tt class="docutils literal"><span class="pre">uv_spawn</span></tt> 内部使
+用了 <tt class="docutils literal"><span class="pre">execvp</span></tt> ，它是不需要提供完整路径的。另外，根据传统，参数数组 <tt class="docutils literal"><span class="pre">args</span></tt> 的
+长度要比实际传入的参数个数多一个，最后那个位置用来放置一个 <tt class="docutils literal"><span class="pre">NULL</span></tt> 哨兵。</p>
 <p>After the call to <tt class="docutils literal"><span class="pre">uv_spawn</span></tt>, <tt class="docutils literal"><span class="pre">uv_process_t.pid</span></tt> will contain the process
 ID of the child process.</p>
+<p><tt class="docutils literal"><span class="pre">uv_spawn</span></tt> 返回时， <tt class="docutils literal"><span class="pre">uv_process_t.pid</span></tt> 包含了新辟的子进程的进程ID.</p>
 <p>The exit callback will be invoked with the <em>exit status</em> and the type of <em>signal</em>
 which caused the exit.</p>
+<p>exit回调函数在调用时会传入退出码(<em>exit status</em>)和导致进程退出的信号(<em>signal</em>)类型。</p>
 <p class="rubric">spawn/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
@@ -156,44 +149,72 @@ which caused the exit.</p>
 </pre></div>
 </td></tr></table></div>
 <p>It is <strong>required</strong> to close the process watcher after the process exits.</p>
+<p>老惯例，进程退出之后，我们也必须关闭这个进程的 watcher，释放相关资源。</p>
 </div>
 <div class="section" id="changing-the-process-parameters">
-<h2>Changing the process parameters<a class="headerlink" href="#changing-the-process-parameters" title="Permalink to this headline">¶</a></h2>
+<h2>改变进程的参数集 Changing the process parameters<a class="headerlink" href="#changing-the-process-parameters" title="Permalink to this headline">¶</a></h2>
 <p>Before the child process is launched you can control the execution environment
 using fields in <tt class="docutils literal"><span class="pre">uv_process_options_t</span></tt>.</p>
+<p>在子进程启动之前，你可以通过设置 <tt class="docutils literal"><span class="pre">uv_process_options_t</span></tt> 中的字段来控制子进程
+的执行环境(execution environment)，比如工作目录、环境变量、搜索路径等。</p>
 <div class="section" id="change-execution-directory">
-<h3>Change execution directory<a class="headerlink" href="#change-execution-directory" title="Permalink to this headline">¶</a></h3>
+<h3>改变工作目录 Change execution directory<a class="headerlink" href="#change-execution-directory" title="Permalink to this headline">¶</a></h3>
 <p>Set <tt class="docutils literal"><span class="pre">uv_process_options_t.cwd</span></tt> to the corresponding directory.</p>
+<p>修改 <tt class="docutils literal"><span class="pre">uv_process_options_t.cwd</span></tt> 来设置工作目录。</p>
 </div>
 <div class="section" id="set-environment-variables">
-<h3>Set environment variables<a class="headerlink" href="#set-environment-variables" title="Permalink to this headline">¶</a></h3>
+<h3>修改环境变量 Set environment variables<a class="headerlink" href="#set-environment-variables" title="Permalink to this headline">¶</a></h3>
 <p><tt class="docutils literal"><span class="pre">uv_process_options_t.env</span></tt> is an array of strings, each of the form
 <tt class="docutils literal"><span class="pre">VAR=VALUE</span></tt> used to set up the environment variables for the process. Set
-this to <tt class="docutils literal"><span class="pre">NULL</span></tt> to inherit the environment from the parent (this) process.</p>
+this to <tt class="docutils literal"><span class="pre">NULL</span></tt> to inherit the environment from the parent (this) process.
+<tt class="docutils literal"><span class="pre">uv_process_options_t.env</span></tt> 是一个字符串数组，每个元素形如 <tt class="docutils literal"><span class="pre">VAR=VALUE</span></tt> ，</p>
+<p>这个字段用来设置进程的环境变量。如果将这个字段设置为 <tt class="docutils literal"><span class="pre">NULL</span></tt> ，则表示子进程
+将沿用父进程（也就是指当前进程）的环境变量。</p>
 </div>
 <div class="section" id="option-flags">
-<h3>Option flags<a class="headerlink" href="#option-flags" title="Permalink to this headline">¶</a></h3>
+<h3>选项标志位 Option flags<a class="headerlink" href="#option-flags" title="Permalink to this headline">¶</a></h3>
 <p>Setting <tt class="docutils literal"><span class="pre">uv_process_options_t.flags</span></tt> to a bitwise OR of the following flags,
-modifies the child process behaviour:</p>
-<ul class="simple">
-<li><tt class="docutils literal"><span class="pre">UV_PROCESS_SETUID</span></tt> - sets the child&#8217;s execution user ID to <tt class="docutils literal"><span class="pre">uv_process_options_t.uid</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">UV_PROCESS_SETGID</span></tt> - sets the child&#8217;s execution group ID to <tt class="docutils literal"><span class="pre">uv_process_options_t.gid</span></tt>.</li>
+modifies the child process behaviour:
+<tt class="docutils literal"><span class="pre">uv_process_options_t.flags</span></tt> 是一个由比特标记，可以通过以下标记的按位或
+（bitwise OR）运算来改变子进程的行为：</p>
+<ul>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">UV_PROCESS_SETUID</span></tt> - sets the child&#8217;s execution user ID to <tt class="docutils literal"><span class="pre">uv_process_options_t.uid</span></tt>.</dt>
+<dd><p class="first last">将子进程执行时的用户ID设置为 <tt class="docutils literal"><span class="pre">uv_process_options_t.uid</span></tt>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">UV_PROCESS_SETGID</span></tt> - sets the child&#8217;s execution group ID to <tt class="docutils literal"><span class="pre">uv_process_options_t.gid</span></tt>.</dt>
+<dd><p class="first last">将子进程执行时的组ID设置为 <tt class="docutils literal"><span class="pre">uv_process_options_t.gid</span></tt> 。</p>
+</dd>
+</dl>
+</li>
 </ul>
 <p>Changing the UID/GID is only supported on Unix, <tt class="docutils literal"><span class="pre">uv_spawn</span></tt> will fail on
 Windows with <tt class="docutils literal"><span class="pre">UV_ENOTSUP</span></tt>.</p>
-<ul class="simple">
-<li><tt class="docutils literal"><span class="pre">UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS</span></tt> - No quoting or escaping of
-<tt class="docutils literal"><span class="pre">uv_process_options_t.args</span></tt> is done on Windows. Ignored on Unix.</li>
-<li><tt class="docutils literal"><span class="pre">UV_PROCESS_DETACHED</span></tt> - Starts the child process in a new session, which
-will keep running after the parent process exits. See example below.</li>
+<p>只有Unix系统才支持改变子进程的 UID/GID，在Windows平台上 <tt class="docutils literal"><span class="pre">uv_spawn</span></tt> 会以
+<tt class="docutils literal"><span class="pre">UV_ENOTSUP</span></tt> 错误宣告失败。</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS</span></tt> - No quoting or escaping of
+<tt class="docutils literal"><span class="pre">uv_process_options_t.args</span></tt> is done on Windows. Ignored on Unix.</p>
+<p>表明 <tt class="docutils literal"><span class="pre">uv_process_options_t.args</span></tt> 忽略引号和转义字符。该标记只在Windows有用，Unix上
+会忽略该标记。</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">UV_PROCESS_DETACHED</span></tt> - Starts the child process in a new session, which
+will keep running after the parent process exits. See example below.</p>
+<p>在新的会话中启动子进行，当父进程退出后子进程仍继续运行。后续实例中展示了这个用法。</p>
+</li>
 </ul>
 </div>
 </div>
 <div class="section" id="detaching-processes">
-<h2>Detaching processes<a class="headerlink" href="#detaching-processes" title="Permalink to this headline">¶</a></h2>
+<h2>分离子进程 Detaching processes<a class="headerlink" href="#detaching-processes" title="Permalink to this headline">¶</a></h2>
 <p>Passing the flag <tt class="docutils literal"><span class="pre">UV_PROCESS_DETACHED</span></tt> can be used to launch daemons, or
 child processes which are independent of the parent so that the parent exiting
 does not affect it.</p>
+<p>利用 <tt class="docutils literal"><span class="pre">UV_PROCESS_DETACHED</span></tt> 标志，可以启动一个守护进程，或者让子进程独立于父进程，
+不受父进程的退出影响。如果不分离的话，子进程是不活不过父进程的。</p>
 <p class="rubric">detach/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -230,9 +251,11 @@ does not affect it.</p>
 </td></tr></table></div>
 <p>Just remember that the watcher is still monitoring the child, so your program
 won&#8217;t exit. Use <tt class="docutils literal"><span class="pre">uv_unref()</span></tt> if you want to be more <em>fire-and-forget</em>.</p>
+<p>记得此时wather仍然还在监视子进程，所以你的程序不会退出。如果你实施 <em>fire-and-forget</em>
+模型的话，要调用 <tt class="docutils literal"><span class="pre">uv_unref()</span></tt> .</p>
 </div>
 <div class="section" id="signals-and-termination">
-<h2>Signals and termination<a class="headerlink" href="#signals-and-termination" title="Permalink to this headline">¶</a></h2>
+<h2>信号和终结 Signals and termination<a class="headerlink" href="#signals-and-termination" title="Permalink to this headline">¶</a></h2>
 <p>libuv wraps the standard <tt class="docutils literal"><span class="pre">kill(2)</span></tt> system call on Unix and implements one
 with similar semantics on Windows, with <em>one caveat</em>. <tt class="docutils literal"><span class="pre">uv_kill</span></tt> on Windows
 only supports <tt class="docutils literal"><span class="pre">SIGTERM</span></tt>, <tt class="docutils literal"><span class="pre">SIGINT</span></tt> and <tt class="docutils literal"><span class="pre">SIGKILL</span></tt>, all of which lead to
@@ -243,9 +266,18 @@ termination of the process. The signature of <tt class="docutils literal"><span 
 <p>For processes started using libuv, you may use <tt class="docutils literal"><span class="pre">uv_process_kill</span></tt> instead,
 which accepts the <tt class="docutils literal"><span class="pre">uv_process_t</span></tt> watcher as the first argument, rather than
 the pid. In this case, <strong>remember to call</strong> <tt class="docutils literal"><span class="pre">uv_close</span></tt> on the watcher.</p>
+<p>在unix平台上，libuv 封装了标准的 <tt class="docutils literal"><span class="pre">kill(2)</span></tt> 系统调用，而在windows上也实施了
+相似的语义，with <em>on caveat</em>. <tt class="docutils literal"><span class="pre">uv_kill</span></tt> 在windows平台上只支持 <tt class="docutils literal"><span class="pre">SIGTERM</span></tt>,
+<tt class="docutils literal"><span class="pre">SIGINT</span></tt> 和 <tt class="docutils literal"><span class="pre">SIGKILL</span></tt>, 这些信号都是将结束进程。 <tt class="docutils literal"><span class="pre">uv_kill</span></tt> 的签名为:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="n">uv_err_t</span> <span class="n">uv_kill</span><span class="p">(</span><span class="kt">int</span> <span class="n">pid</span><span class="p">,</span> <span class="kt">int</span> <span class="n">signum</span><span class="p">);</span>
+</pre></div>
 </div>
-<div class="section" id="child-process-i-o">
-<h2>Child Process I/O<a class="headerlink" href="#child-process-i-o" title="Permalink to this headline">¶</a></h2>
+<p>如果是由libuv启动的进程，你也可以使用 <tt class="docutils literal"><span class="pre">uv_process_kill</span></tt> ，这个函数接受的第
+一个参数是一个``uv_process_t`` watcher，而不是pid, 这时你别忘记对 watcher 调
+用 <tt class="docutils literal"><span class="pre">uv_close</span></tt> .</p>
+</div>
+<div class="section" id="io-child-process-i-o">
+<h2>子进程的IO Child Process I/O<a class="headerlink" href="#io-child-process-i-o" title="Permalink to this headline">¶</a></h2>
 <p>A normal, newly spawned process has its own set of file descriptors, with 0,
 1 and 2 being <tt class="docutils literal"><span class="pre">stdin</span></tt>, <tt class="docutils literal"><span class="pre">stdout</span></tt> and <tt class="docutils literal"><span class="pre">stderr</span></tt> respectively. Sometimes you
 may want to share file descriptors with the child. For example, perhaps your
@@ -253,6 +285,12 @@ applications launches a sub-command and you want any errors to go in the log
 file, but ignore <tt class="docutils literal"><span class="pre">stdout</span></tt>. For this you&#8217;d like to have <tt class="docutils literal"><span class="pre">stderr</span></tt> of the
 child to be displayed. In this case, libuv supports <em>inheriting</em> file
 descriptors. In this sample, we invoke the test program, which is:</p>
+<p>每一个正常的、新辟出的进程都拥有三个标准的文件描述符，分别是0, 1, 2对应的，
+标准输入(<tt class="docutils literal"><span class="pre">stdin</span></tt>)、标准输出(<tt class="docutils literal"><span class="pre">stdout</span></tt>)和标准错误输出(<tt class="docutils literal"><span class="pre">stderr</span></tt>)。有时你可能
+希望和子进程共用这些文件描述符。比如，你的应用启动了一个子命令，并且希望将所有
+的错误都输出到日志文件，而忽略标准输出 <tt class="docutils literal"><span class="pre">stdout</span></tt> 。这时，你可能希望子进程有一
+个可以用于显示的 <tt class="docutils literal"><span class="pre">stderr</span></tt>. 这种的场景下，libuv支持 <em>继承</em> 文件描述符。在下例中
+我们通过了进程的方式调用test程序：</p>
 <p class="rubric">proc-streams/test.c</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="cp">#include &lt;stdio.h&gt;</span>
 
@@ -269,6 +307,11 @@ The file descriptors of the child process are set using the <tt class="docutils 
 <tt class="docutils literal"><span class="pre">uv_process_options_t</span></tt>. First set the <tt class="docutils literal"><span class="pre">stdio_count</span></tt> field to the number of
 file descriptors being set. <tt class="docutils literal"><span class="pre">uv_process_options_t.stdio</span></tt> is an array of
 <tt class="docutils literal"><span class="pre">uv_stdio_container_t</span></tt>, which is:</p>
+<p><tt class="docutils literal"><span class="pre">proc-streams</span></tt> 程序在运行上面这个测试时，只传承了 <tt class="docutils literal"><span class="pre">stderr</span></tt> 流。这是利用
+<tt class="docutils literal"><span class="pre">uv_process_options_t</span></tt> 的 <tt class="docutils literal"><span class="pre">stdio</span></tt> 字段，设置子进程的文件描述符来实现的。首先
+要设置 <tt class="docutils literal"><span class="pre">stdio_count</span></tt> 为要设置的文件描述符的数目。
+<tt class="docutils literal"><span class="pre">uv_process_options_t.stdio</span></tt> 是一个 <tt class="docutils literal"><span class="pre">uv_stdio_container_t</span></tt> 数组，
+<tt class="docutils literal"><span class="pre">uv_stdio_container_t</span></tt> 的定义如下：</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="k">typedef</span> <span class="k">struct</span> <span class="n">uv_stdio_container_s</span> <span class="p">{</span>
   <span class="n">uv_stdio_flags</span> <span class="n">flags</span><span class="p">;</span>
 
@@ -282,8 +325,12 @@ file descriptors being set. <tt class="docutils literal"><span class="pre">uv_pr
 <p>where flags can have several values. Use <tt class="docutils literal"><span class="pre">UV_IGNORE</span></tt> if it isn&#8217;t going to be
 used. If the first three <tt class="docutils literal"><span class="pre">stdio</span></tt> fields are marked as <tt class="docutils literal"><span class="pre">UV_IGNORE</span></tt> they&#8217;ll
 redirect to <tt class="docutils literal"><span class="pre">/dev/null</span></tt>.</p>
+<p>其中的 <tt class="docutils literal"><span class="pre">flags</span></tt> 可以设置一些值。如果不希望被使用的话，设置为 <tt class="docutils literal"><span class="pre">UV_IGNORE</span></tt> .
+如果前三个 <tt class="docutils literal"><span class="pre">stdio</span></tt> 被标记为 <tt class="docutils literal"><span class="pre">UV_IGNORE</span></tt>, 它们则被重定向到 <tt class="docutils literal"><span class="pre">/dev/null</span></tt> 。</p>
 <p>Since we want to pass on an existing descriptor, we&#8217;ll use <tt class="docutils literal"><span class="pre">UV_INHERIT_FD</span></tt>.
 Then we set the <tt class="docutils literal"><span class="pre">fd</span></tt> to <tt class="docutils literal"><span class="pre">stderr</span></tt>.</p>
+<p>因为例中我们希望传递一个已存在的文件描述符，所以我们使用 <tt class="docutils literal"><span class="pre">UV_INHERIT_FD</span></tt>, 然后
+再将 <tt class="docutils literal"><span class="pre">fd</span></tt> 设置为 <tt class="docutils literal"><span class="pre">stderr</span></tt> .</p>
 <p class="rubric">proc-streams/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -338,11 +385,17 @@ Then we set the <tt class="docutils literal"><span class="pre">fd</span></tt> to
 </td></tr></table></div>
 <p>If you run <tt class="docutils literal"><span class="pre">proc-stream</span></tt> you&#8217;ll see that only the line &#8220;This is stderr&#8221; will
 be displayed. Try marking <tt class="docutils literal"><span class="pre">stdout</span></tt> as being inherited and see the output.</p>
+<p>运行 <tt class="docutils literal"><span class="pre">proc-streams</span></tt> 控制台将只显示一行 &#8220;This is stderr&#8221;。若是将 <tt class="docutils literal"><span class="pre">stdout</span></tt>
+也继承给子进程的话，你就可以看到子进程的标准输出的内容。</p>
 <p>It is dead simple to apply this redirection to streams.  By setting <tt class="docutils literal"><span class="pre">flags</span></tt>
 to <tt class="docutils literal"><span class="pre">UV_INHERIT_STREAM</span></tt> and setting <tt class="docutils literal"><span class="pre">data.stream</span></tt> to the stream in the
 parent process, the child process can treat that stream as standard I/O. This
 can be used to implement something like <a class="reference external" href="http://en.wikipedia.org/wiki/Common_Gateway_Interface">CGI</a>.</p>
+<p>使用流重定向功能也非常简单。只要设置 <tt class="docutils literal"><span class="pre">flags</span></tt> 为 <tt class="docutils literal"><span class="pre">UV_INHERIT_STREAM</span></tt> 并将
+<tt class="docutils literal"><span class="pre">data.stream</span></tt> 设置为父进程的某个流，子进行就可以像处理标准输出输出流一样使用
+这些流。比如一个简单的 <a class="reference external" href="http://en.wikipedia.org/wiki/Common_Gateway_Interface">CGI</a> 功能中可能出现这种场景。</p>
 <p>A sample CGI script/executable is:</p>
+<p>比如下面这个简单的CGI脚本（是个执行程序）:</p>
 <p class="rubric">cgi/tick.c</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="cp">#include &lt;stdio.h&gt;</span>
 <span class="cp">#include &lt;unistd.h&gt;</span>
@@ -361,6 +414,8 @@ can be used to implement something like <a class="reference external" href="http
 </div>
 <p>The CGI server combines the concepts from this chapter and <a class="reference internal" href="networking.html"><em>Networking</em></a> so
 that every client is sent ten ticks after which that connection is closed.</p>
+<p>我们将结合了本章的概念和 <a class="reference internal" href="networking.html"><em>Networking</em></a> 来实现一个CGI服务器，服务器会给每一个
+连入的客户端发送10个tick，然后关闭连接。</p>
 <p class="rubric">cgi/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -385,6 +440,7 @@ that every client is sent ten ticks after which that connection is closed.</p>
 </td></tr></table></div>
 <p>Here we simply accept the TCP connection and pass on the socket (<em>stream</em>) to
 <tt class="docutils literal"><span class="pre">invoke_cgi_script</span></tt>.</p>
+<p>这段代码简单的接受TCP连接，并将socket(<em>stream</em>) 传给 <tt class="docutils literal"><span class="pre">invoke_cgi_script</span></tt>.</p>
 <p class="rubric">cgi/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -435,40 +491,62 @@ that every client is sent ten ticks after which that connection is closed.</p>
 script prints gets sent to the client. By using processes, we can offload the
 read/write buffering to the operating system, so in terms of convenience this
 is great. Just be warned that creating processes is a costly task.</p>
+<p>将CGI脚本的标准输出 <tt class="docutils literal"><span class="pre">stdout</span></tt> 定向到 socket，使得脚本打印出的所有tick都被
+发送到客户端。通过利用进程，我们将缓冲区读写的责任移交给了操作系统，使用起来很方
+便。但要记住创建进程本身是一项代价比较高的任务。</p>
 </div>
 <div class="section" id="pipes">
-<span id="id1"></span><h2>Pipes<a class="headerlink" href="#pipes" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2>管道 Pipes<a class="headerlink" href="#pipes" title="Permalink to this headline">¶</a></h2>
 <p>libuv&#8217;s <tt class="docutils literal"><span class="pre">uv_pipe_t</span></tt> structure is slightly confusing to Unix programmers,
 because it immediately conjures up <tt class="docutils literal"><span class="pre">|</span></tt> and <a class="reference external" href="http://www.kernel.org/doc/man-pages/online/pages/man7/pipe.7.html">pipe(7)</a>. But <tt class="docutils literal"><span class="pre">uv_pipe_t</span></tt> is
-not related to anonymous pipes, rather it has two uses:</p>
-<ol class="arabic simple">
-<li>Stream API - It acts as the concrete implementation of the <tt class="docutils literal"><span class="pre">uv_stream_t</span></tt>
+not related to anonymous pipes, rather it has two uses:
+libuv 的 <tt class="docutils literal"><span class="pre">uv_pipe_t</span></tt> 结构令Unix程序员感到困惑。因为它立刻让人想起 <tt class="docutils literal"><span class="pre">|</span></tt> 和 <a class="reference external" href="http://www.kernel.org/doc/man-pages/online/pages/man7/pipe.7.html">pipe(7)</a>.</p>
+<p>但是 <tt class="docutils literal"><span class="pre">uv_pipe_t</span></tt> 和匿名管道没什么关系。它有两种用法：</p>
+<ol class="arabic">
+<li><p class="first">Stream API - It acts as the concrete implementation of the <tt class="docutils literal"><span class="pre">uv_stream_t</span></tt>
 API for providing a FIFO, streaming interface to local file I/O. This is
 performed using <tt class="docutils literal"><span class="pre">uv_pipe_open</span></tt> as covered in <a class="reference internal" href="filesystem-zh.html#buffers-and-streams"><em>缓冲区和流 Buffers and Streams</em></a>.
 You could also use it for TCP/UDP, but there are already convenience functions
-and structures for them.</li>
-<li>IPC mechanism - <tt class="docutils literal"><span class="pre">uv_pipe_t</span></tt> can be backed by a <a class="reference external" href="http://www.kernel.org/doc/man-pages/online/pages/man7/unix.7.html">Unix Domain Socket</a> or
+and structures for them.</p>
+<p>流API － 它实现了 <tt class="docutils literal"><span class="pre">uv_stream_t</span></tt> API，提供了一套针对本地文件的IO流接口。
+这需要使用 <tt class="docutils literal"><span class="pre">uv_pipe_open</span></tt> 函数，具体内容在 <a class="reference internal" href="filesystem-zh.html#buffers-and-streams"><em>缓冲区和流 Buffers and Streams</em></a> 中讨论了。
+你也可以将它用于 TCP/UDP，只不过它们已经拥有了一套方便的函数和结构了。</p>
+</li>
+<li><p class="first">IPC mechanism - <tt class="docutils literal"><span class="pre">uv_pipe_t</span></tt> can be backed by a <a class="reference external" href="http://www.kernel.org/doc/man-pages/online/pages/man7/unix.7.html">Unix Domain Socket</a> or
 <a class="reference external" href="http://msdn.microsoft.com/en-us/library/windows/desktop/aa365590(v=vs.85).aspx">Windows Named Pipe</a> to allow multiple processes to communicate. This is
-discussed below.</li>
+discussed below.</p>
+<p>IPC 机制 － <tt class="docutils literal"><span class="pre">uv_pipe_t</span></tt> 依靠 <a class="reference external" href="http://www.kernel.org/doc/man-pages/online/pages/man7/unix.7.html">Unix Domain Socket</a> 或者 <a class="reference external" href="http://msdn.microsoft.com/en-us/library/windows/desktop/aa365590(v=vs.85).aspx">Windows Named Pipe</a>
+从而允许多进程进行通讯。下面来讨论这些内容。</p>
+</li>
 </ol>
-<div class="section" id="parent-child-ipc">
-<h3>Parent-child IPC<a class="headerlink" href="#parent-child-ipc" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="ipc-parent-child-ipc">
+<h3>父子进程之间的 IPC Parent-child IPC<a class="headerlink" href="#ipc-parent-child-ipc" title="Permalink to this headline">¶</a></h3>
 <p>A parent and child can have one or two way communication over a pipe created by
 settings <tt class="docutils literal"><span class="pre">uv_stdio_container_t.flags</span></tt> to a bit-wise combination of
 <tt class="docutils literal"><span class="pre">UV_CREATE_PIPE</span></tt> and <tt class="docutils literal"><span class="pre">UV_READABLE_PIPE</span></tt> or <tt class="docutils literal"><span class="pre">UV_WRITABLE_PIPE</span></tt>. The
 read/write flag is from the perspective of the child process.</p>
+<p>父子进程之间可以利用管道来建立单向或者双向通讯。在创建子进程时将
+<tt class="docutils literal"><span class="pre">uv_stdio_container_t.flags</span></tt> 设置为 <tt class="docutils literal"><span class="pre">UV_CREATE_PIPE</span></tt> 和 <tt class="docutils literal"><span class="pre">UV_READABLE_PIPE</span></tt>
+或者 <tt class="docutils literal"><span class="pre">UV_WRITABLE_PIPE</span></tt> 的按位组合。所谓的读写是以子进程的角度而言的。</p>
 </div>
-<div class="section" id="arbitrary-process-ipc">
-<h3>Arbitrary process IPC<a class="headerlink" href="#arbitrary-process-ipc" title="Permalink to this headline">¶</a></h3>
-<p>Since domain sockets <a class="footnote-reference" href="#id3" id="id2">[1]</a> can have a well known name and a location in the
+<div class="section" id="ipc-arbitrary-process-ipc">
+<h3>任意进程间的IPC Arbitrary process IPC<a class="headerlink" href="#ipc-arbitrary-process-ipc" title="Permalink to this headline">¶</a></h3>
+<p>Since domain sockets <a class="footnote-reference" href="#id9" id="id2">[1]</a> can have a well known name and a location in the
 file-system they can be used for IPC between unrelated processes. The D-BUS
 system used by open source desktop environments uses domain sockets for event
 notification. Various applications can then react when a contact comes online
 or new hardware is detected. The MySQL server also runs a domain socket on
 which clients can interact with it.</p>
+<p>因为domain sockets 是可以有命名的，并且在文件系统中有一个location，利用
+这些可以进行无关的进程之间的IPC. 开源桌面环境中使用的D-BUS系统就利用了
+domain sockets进行事件通知。借此许多应用程序就可以对联系人上线或是侦测到新硬件
+时做出响应。MySQL服务器也运行了一个domain socket，客户可以利用它与服务器交互。</p>
 <p>When using domain sockets, a client-server pattern is usually followed with the
 creator/owner of the socket acting as the server. After the initial setup,
 messaging is no different from TCP, so we&#8217;ll re-use the echo server example.</p>
+<p>在使用domain socket的时候，一般会采取客户－服务器模式，socket的创建者（或所有者）
+作为服务器角色。初始化设置完成之后，消息传递过程就与TCP没什么两样了，因此我们再
+次使用echo 服务器的例子来完成阐述。</p>
 <p class="rubric">pipe-echo-server/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -512,29 +590,46 @@ directory. This socket now behaves no different from TCP sockets as far as
 the stream API is concerned. You can test this server using <a class="reference external" href="http://netcat.sf.net">netcat</a>:</p>
 <div class="highlight-c"><pre>$ nc -U /path/to/echo.sock</pre>
 </div>
+<p>我们这里将socket命名为 <tt class="docutils literal"><span class="pre">echo.sock</span></tt> ， 这样它将会在当前目录上创建。对于流API，
+这个socket和TCP的socket是没有两样的。借助 <a class="reference external" href="http://netcat.sf.net">netcat</a> 可以测试这个服务器:</p>
+<div class="highlight-c"><pre>$ nc -U /path/to/echo.sock</pre>
+</div>
 <p>A client which wants to connect to a domain socket will use:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="kt">void</span> <span class="n">uv_pipe_connect</span><span class="p">(</span><span class="n">uv_connect_t</span> <span class="o">*</span><span class="n">req</span><span class="p">,</span> <span class="n">uv_pipe_t</span> <span class="o">*</span><span class="n">handle</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="n">uv_connect_cb</span> <span class="n">cb</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>where <tt class="docutils literal"><span class="pre">name</span></tt> will be <tt class="docutils literal"><span class="pre">echo.sock</span></tt> or similar.</p>
+<dl class="docutils">
+<dt>客户端如果要连接domain socket，可以使用::</dt>
+<dd>void uv_pipe_connect(uv_connect_t <a href="#id3"><span class="problematic" id="id4">*</span></a>req, uv_pipe_t <a href="#id5"><span class="problematic" id="id6">*</span></a>handle, const char <a href="#id7"><span class="problematic" id="id8">*</span></a>name, uv_connect_cb cb);</dd>
+</dl>
+<p>这里将 <tt class="docutils literal"><span class="pre">name</span></tt> 设置为 <tt class="docutils literal"><span class="pre">echo.sock</span></tt> 就可以了。</p>
 </div>
 <div class="section" id="sending-file-descriptors-over-pipes">
-<h3>Sending file descriptors over pipes<a class="headerlink" href="#sending-file-descriptors-over-pipes" title="Permalink to this headline">¶</a></h3>
+<h3>通过管道发送文件描述符 Sending file descriptors over pipes<a class="headerlink" href="#sending-file-descriptors-over-pipes" title="Permalink to this headline">¶</a></h3>
 <p>The cool thing about domain sockets is that file descriptors can be exchanged
 between processes by sending them over a domain socket. This allows processes
 to hand off their I/O to other processes. Applications include load-balancing
 servers, worker processes and other ways to make optimum use of CPU.</p>
+<p>借助domain socket可以完成一件很酷的事情，那就是通过domain socket可以在进程之间
+交换文件描述符。让进程把它们的IO传递给别的进程。应用场景包括使用负载均衡服务器、
+工作者进程或其它的方式来优化CPU的使用。</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">On Windows, only file descriptors representing TCP sockets can be passed
+<p>On Windows, only file descriptors representing TCP sockets can be passed
 around.</p>
+<p class="last">在Windows上，只有当文件描述符是表示TCP socket时才可以这样传递。</p>
 </div>
 <p>To demonstrate, we will look at a echo server implementation that hands of
 clients to worker processes in a round-robin fashion. This program is a bit
 involved, and while only snippets are included in the book, it is recommended
 to read the full code to really understand it.</p>
+<p>作为演示，我们再来实现一个echo server，这次服务器将以round-robin(负载均衡)的
+方式调度工作者进程来处理客户请求。程序有点难懂，本书中仅包含一些片段，所以推荐
+阅读全部代码来理解它。</p>
 <p>The worker process is quite simple, since the file-descriptor is handed over to
 it by the master.</p>
+<p>由于文件描述符是由master传递过来的，所以工作作进程的实现比较简单。</p>
 <p class="rubric">multi-echo-server/worker.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -565,6 +660,10 @@ interest in file descriptors. It is important to set the <tt class="docutils lit
 <tt class="docutils literal"><span class="pre">uv_pipe_init</span></tt> to 1 to indicate this pipe will be used for inter-process
 communication! Since the master will write the file handle to the standard
 input of the worker, we connect the pipe to <tt class="docutils literal"><span class="pre">stdin</span></tt> using <tt class="docutils literal"><span class="pre">uv_pipe_open</span></tt>.</p>
+<p>这里 <tt class="docutils literal"><span class="pre">queue</span></tt> 是一个管道，用于连接另一端的master，新的文件描述符通过此管道发送
+过来。我们利用 <tt class="docutils literal"><span class="pre">read2</span></tt> 函数表明对文件描述符感兴趣。需要强调的是，在调用 <tt class="docutils literal"><span class="pre">uv_pipe_init</span></tt> 时将参数 <tt class="docutils literal"><span class="pre">ipc</span></tt> 设置为1，以指明这个管道将用于进行进程间通讯。因为
+master会将文件句柄写入到worker的标准输入，所以我们使用 <tt class="docutils literal"><span class="pre">uv_pipe_open</span></tt> 新将建立
+的管道连接到标准输入流。</p>
 <p class="rubric">multi-echo-server/worker.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -604,8 +703,13 @@ input of the worker, we connect the pipe to <tt class="docutils literal"><span c
 another file descriptor (The listening socket). Which is exactly what we do
 here. Fetch the file descriptor (<tt class="docutils literal"><span class="pre">client</span></tt>) from <tt class="docutils literal"><span class="pre">queue</span></tt>. From this point
 the worker does standard echo server stuff.</p>
+<p>虽然 <tt class="docutils literal"><span class="pre">accept</span></tt> 在这段代码里看起来别扭，但确实合理。传统的 <tt class="docutils literal"><span class="pre">accept</span></tt> 做的事情
+就是从一个文件描述符（侦听socket）获取另一个文件描述符（客户的socket）。这里也
+是这么干的。从 <tt class="docutils literal"><span class="pre">queue</span></tt> 取得一个文件描述符(<tt class="docutils literal"><span class="pre">client</span></tt>)，从这时开始，worker就
+做着标准echo服务器的活了。</p>
 <p>Turning now to the master, let&#8217;s take a look at how the workers are launched to
 allow load balancing.</p>
+<p>接来再介绍master，让我们来看看它是如何启动worker并进行负载均衡的。</p>
 <p class="rubric">multi-echo-server/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
@@ -624,6 +728,7 @@ allow load balancing.</p>
 </td></tr></table></div>
 <p>The <tt class="docutils literal"><span class="pre">child_worker</span></tt> structure wraps the process, and the pipe between the
 master and the individual process.</p>
+<p><tt class="docutils literal"><span class="pre">child_worker</span></tt> 结构将进程和master和进程之间的管道打包以了一起。</p>
 <p class="rubric">multi-echo-server/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -701,9 +806,16 @@ argument as 1. We then indicate that the child process&#8217; <tt class="docutil
 a readable pipe (from the point of view of the child). Everything is
 straightforward till here. The workers are launched and waiting for file
 descriptors to be written to their pipes.</p>
+<p>在初始化工作者进程组的时候，我们利用了另一个很棒的libuv函数 —— <tt class="docutils literal"><span class="pre">uv_cpu_info</span></tt> 来
+获取当前CPU的数目，然后发起等量的工作者进程。再强调一次，在创建作为IPC通道的管道
+时，第三个参数需要设置为1. 然后将子进程的 <tt class="docutils literal"><span class="pre">stdin</span></tt> 标记为可读的管道（从子进程的
+角度看）。到这时所有事情都很简单。工作者进程组被启动，并等待文件描述符被写入到它
+们的管道中。</p>
 <p>It is in <tt class="docutils literal"><span class="pre">on_new_connection</span></tt> (the TCP infrastructure is initialized in
 <tt class="docutils literal"><span class="pre">main()</span></tt>), that we accept the client socket and pass it along to the next
 worker in the round-robin.</p>
+<p>在 <tt class="docutils literal"><span class="pre">on_new_connection</span></tt> 函数中，我们接受客户socket，并将之传递给一个工作者进程。具体传给哪一个工作者，就是采用了round-robin的方式，轮流的每个工作者处理一个客户
+socket。</p>
 <p class="rubric">multi-echo-server/main.c</p>
 <div class="highlight-c"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -747,9 +859,11 @@ worker in the round-robin.</p>
 <p>Again, the <tt class="docutils literal"><span class="pre">uv_write2</span></tt> call handles all the abstraction and it is simply
 a matter of passing in the file descriptor as the right argument. With this our
 multi-process echo server is operational.</p>
+<p>这里的 <tt class="docutils literal"><span class="pre">uv_write2</span></tt> 的调用简化了文件描述符传递过程。利用这个我们的多进程echo
+服务器就可以运行了。</p>
 <p>TODO what do the write2/read2 functions do with the buffers?</p>
 <hr class="docutils" />
-<table class="docutils footnote" frame="void" id="id3" rules="none">
+<table class="docutils footnote" frame="void" id="id9" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td>In this section domain sockets stands in for named pipes on Windows as
@@ -765,11 +879,7 @@ well.</td></tr>
       <div class="bottomnav">
       
         <p>
-        «&#160;&#160;<a href="threads.html">Threads</a>
-        &#160;&#160;::&#160;&#160;
         <a class="uplink" href="index.html">Contents</a>
-        &#160;&#160;::&#160;&#160;
-        <a href="multiple.html">Multiple event loops</a>&#160;&#160;»
         </p>
 
       </div>
