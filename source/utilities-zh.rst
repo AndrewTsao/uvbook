@@ -131,7 +131,7 @@ Let us first look at the interface provided to plugin authors.
     :linenos:
 
 You can similarly add more functions that plugin authors can use to do useful
-things in your application [#]_. A sample plugin using this API is:
+things in your application . A sample plugin using this API is:
 
 你可以在你的应用之中类似地加入更多的函数，以便于插件作者用来未完成更多有用的事情[#]_。
 下面是一个使用了这个API的简单插件: 
@@ -293,7 +293,7 @@ automatically exits, even though the garbage collector is still running.
 When using ``uv_queue_work`` you'll usually need to pass complex data through
 to the worker thread. The solution is to use a ``struct`` and set
 ``uv_work_t.data`` to point to it. A slight variation is to have the
-``uv_work_t`` itself as the first member of this struct (called a baton [#]_).
+``uv_work_t`` itself as the first member of this struct (called a baton).
 This allows cleaning up the work request and all the data in one free call.
 
 在使用 ``uv_queue_work`` 时，你经常需要向工作者线程传递一些复杂的数据。
