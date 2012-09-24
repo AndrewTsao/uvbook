@@ -6,8 +6,9 @@ The `libev man page`_ already covers some patterns which can be adopted to
 libuv through simple API changes.  It also covers parts of the libuv API that
 don't require entire chapters dedicated to them.
 
-这章内容将编目一些对常见任务非常有用的工具及技术。 libev 手册页(`libev man page`_) 已经涵盖的
-一些使用模式，在libuv中只需简单地修改相应的API。还包含了一些....
+这章内容将编目一些对常见任务非常有用的工具及技术。 libev 手册页
+(`libev man page`_)已经涵盖的一些使用模式，在libuv中只需简单地修改相应的API。还包
+含了一部分并没必要花费整章内容进行解释的libuv API。
 
 计时器 Timers
 ------
@@ -16,14 +17,14 @@ Timers invoke the callback after a certain time has elapsed since the timer was
 started. libuv timers can also be set to invoke at regular intervals instead of
 just once.
 
-计时器启动之后，会在一段时间之后调用回调函数。libuv计时器还可以设置为每间隔一段时间（周期性地）
-调用一次回调函数。
+计时器一旦启动，就会在一段时间之后调用回调函数。libuv的计时器还可以设置为每间隔一
+段时间（周期性地）就调用一次回调函数。
 
 Simple use is to init a watcher and start it with a ``timeout``, and optional ``repeat``.
 Timers can be stopped at any time.
 
-简单的用法是初始化watcher，在启动时传入一个 ``timeout`` 和可选的 ``repeat`` (是否重复).
-计时器允许在任务时候停止。
+简单的用法是初始化watcher，在启动时传入一个 ``timeout`` 和可选的 ``repeat`` (是否
+重复)，计时器就开始运行了。当然计时器允许在任何时候停止。
 
 .. code-block:: c
 
@@ -35,8 +36,8 @@ Timers can be stopped at any time.
 will start a repeating timer, which first starts 5 seconds (the ``timeout``) after the execution
 of ``uv_timer_start``, then repeats every 2 seconds (the ``repeat``). Use:
 
-此例的代码将启动一个周期性计时器，首次调用是在执行 ``uv_timer_start`` 之后的5秒(由 ``timeout`` 指定).
-然后每间隔2秒(由 ``repeat`` 参数指定)。通过调用: 
+此例的代码将启动一个周期性计时器，首次调用是在执行 ``uv_timer_start`` 之后的5秒
+(由 ``timeout`` 指定).然后每间隔2秒(由 ``repeat`` 参数指定)再执行一次。通过调用: 
 
 .. code-block:: c
 
@@ -63,11 +64,11 @@ a timer callback, it means:
 
     uv_timer_set_repeat(uv_timer_t *timer, int64_t repeat);
 
-在 **恰当的时刻** (when possible) 生效。如果这个函数是在某个计时器回调函数内部调用的，那么:
+修改将在 **恰当的时刻** (when possible) 生效。如果这个函数是在某个计时器回调函数
+内部调用的，那么:
 
 * 如果计时器是非周期性触发的，则计时器已经停止。需要再次调用 ``uv_timer_start`` 来启动。
-* 如果计时器是周期性触发的，则下一次的超时时间已经被安排过了，下一次触发的时间仍然是修改前
-  的周期决定的。
+* 如果计时器是周期性触发的，则下一次的超时时间已经被安排过了，下一次触发的时间仍然是修改前的周期决定的。
 
 The utility function::
 
@@ -82,9 +83,8 @@ old ``repeat`` value. If the timer hasn't been started it fails (error code
 
      int uv_timer_again(uv_timer_t *)
 
-只适合周期性触发的计时器，它的作用相当于停止计时器，然后再将 ``timeout`` 和 ``repeat`` 
-都设置为原来的 ``repeat`` 的值，并启动之。如果启动时还没有启动，那么它会以 ``UV_EINVAL`` 错误码
-宣告失败并返回 -1.
+只适合周期性触发的计时器，它的作用相当于停止计时器，然后再将 ``timeout`` 和
+``repeat`` 都设置为原来的 ``repeat`` 的值，并启动之。如果启动时还没有启动，那么它会以 ``UV_EINVAL`` 错误码宣告失败并返回 -1.
 
 An actual timer example is in the :ref:`reference count section
 <reference-count>`.
@@ -358,7 +358,115 @@ We then free the baton which also frees the watcher.
 控制台 TTY
 ---
 
-TODO
+Text terminals have supported basic formatting for a long time, with a `pretty
+standardised`_ command set. This formatting is often used by programs to
+improve the readability of terminal output. For example ``grep --colour``.
+libuv provides the ``uv_tty_t`` abstraction (a stream) and related functions to
+implement the ANSI escape codes across all platforms. By this I mean that libuv
+converts ANSI codes to the Windows equivalent, and provides functions to get
+terminal information.
+
+.. _pretty standardised: http://en.wikipedia.org/wiki/ANSI_escape_sequences
+
+文本终端通过 `pretty standardised`_ 命令集来支持基本的格式化操作已经很久了。这种
+格式化经常被程序用来提升终端输出内容的可读性。比如， ``grep --colour``. libuv 
+提供的 ``uv_tty_t`` 抽象（抽象为流）和相关的函数，实现了ANSI转义码，并且兼容所有
+平台。libuv 能够将ANSI转义码转换到Windows平台上对应的实现，并提供函数获取关于终
+端的信息（比如标准、屏宽等）。
+
+The first thing to do is to initialize a ``uv_tty_t`` with the file descriptor
+it reads/writes from. This is achieved with::
+
+    int uv_tty_init(uv_loop_t*, uv_tty_t*, uv_file fd, int readable)
+
+If ``readable`` is false, ``uv_write`` calls to this stream will be
+**blocking**.
+
+首先要做的是使用一个读写的文件描述符来初始化 ``uv_tty_t`` ，（译注：这里的文件句柄应该是由uv_tty_t来读写吧？） 需要调用函数::
+
+    int uv_tty_init(uv_loop_t*, uv_tty_t*, uv_file fd, int readable)
+
+如果 ``readable`` 为 false， 针对这个流的 ``uv_write`` 调用将会被 **阻塞**.
+
+It is then best to ``uv_tty_set_mode`` to set the mode to *normal* (0)
+which enables most TTY formatting, flow-control and other settings. *raw* mode
+(1) is also supported.
+
+然后最好通过 ``uv_tty_set_mode`` 将模式设置为 *normal* (0)，这将使得大部分 TTY
+格式化操作，文本流控制和其它设置。 *raw* 模式也被支持。
+
+Remember to call ``uv_tty_reset_mode`` when your program exits to restore the
+state of the terminal. Just good manners. Another set of good manners is to be
+aware of redirection. If the user redirects the output of your command to
+a file, control sequences should not be written as they impede readability and
+``grep``. To check if the file descriptor is indeed a TTY, call
+``uv_guess_handle`` with the file descriptor and compare the return value with
+``UV_TTY``.
+
+记得在你的程序退出时调用 ``uv_tty_reset_mode`` 以恢复终端到原始状态。这是个好习
+惯。另外一些惯例是注意重定向。如果用户将你的命令的输出重定向到一个文件，那么控制
+序列就不应该被输出，因为这会妨碍阅读和 ``grep``. 如果要检查一个文件描述符确实是
+一个TTY，可能将文件描述符输入 ``uv_guess_handle`` 并检查返回值是否为 ``UV_TTY``.
+
+
+Here is a simple example which prints white text on a red background:
+
+下例将演示如何在终端打印红底白字:
+
+.. rubric:: tty/main.c
+.. literalinclude:: ../code/tty/main.c
+    :linenos:
+    :emphasize-lines: 11-12,14,17,27
+
+The final TTY helper is ``uv_tty_get_winsize()`` which is used to get the
+width and height of the terminal and returns ``0`` on success. Here is a small
+program which does some animation using the function and character position
+escape codes.
+
+最后那个TTY辅助函数 ``uv_tty_get_winsize`` ，它是用来获取终端的宽和高的，如果
+返回 ``0`` 表示成功。接下来的小程序利用这个函数和字符位置转义码做出一些小动画。
+
+.. rubric:: tty-gravity/main.c
+.. literalinclude:: ../code/tty-gravity/main.c
+    :linenos:
+    :emphasize-lines: 19,25,38
+
+The escape codes are:
+
+======  =======================
+Code    Meaning
+======  =======================
+*2* J    Clear part of the screen, 2 is entire screen
+H        Moves cursor to certain position, default top-left
+*n* B    Moves cursor down by n lines
+*n* C    Moves cursor right by n columns
+m        Obeys string of display settings, in this case green background (40+2), white text (30+7)
+======  =======================
+
+转义码有这些:
+
+======  =======================
+码字    表意
+======  =======================
+*2* J    清除部分屏幕内容, 2 指清除整个屏幕的内容
+H        移动光标到指定位置, 默认在左上角
+*n* B    将光标向下移动n行
+*n* C    将光标向右移动n列
+m        Obeys string of display settings, 此例中 green background (40+2), white text (30+7)
+======  =======================
+
+
+
+As you can see this is very useful to produce nicely formatted output, or even
+console based arcade games if that tickles your fancy. For fancier control you
+can try `ncurses`_.
+
+可以看出这些代码在生成非常美观的格式化输出是非常有用，甚至是让你着迷的基于控制
+台的街机游戏。对于发烧友不妨体验下 `ncurses`_.
+
+.. _ncurses: http://www.gnu.org/software/ncurses/ncurses.html
+
+----
 
 .. [#] mfp is My Fancy Plugin
 .. [#] I was first introduced to the term baton in this context, in Konstantin
