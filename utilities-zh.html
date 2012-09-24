@@ -516,8 +516,9 @@ This allows cleaning up the work request and all the data in one free call.</p>
 </td></tr></table></div>
 <p>We then free the baton which also frees the watcher.</p>
 <p>最后我们释放baton的时候，也同时将watcher一起释放了。</p>
-<p>控制台 TTY
-&#8212;</p>
+</div>
+<div class="section" id="tty">
+<h2>控制台 TTY<a class="headerlink" href="#tty" title="Permalink to this headline">¶</a></h2>
 <p>Text terminals have supported basic formatting for a long time, with a <a class="reference external" href="http://en.wikipedia.org/wiki/ANSI_escape_sequences">pretty
 standardised</a> command set. This formatting is often used by programs to
 improve the readability of terminal output. For example <tt class="docutils literal"><span class="pre">grep</span> <span class="pre">--colour</span></tt>.

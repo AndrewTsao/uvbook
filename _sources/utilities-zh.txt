@@ -356,7 +356,7 @@ We then free the baton which also frees the watcher.
 最后我们释放baton的时候，也同时将watcher一起释放了。
 
 控制台 TTY
----
+----------
 
 Text terminals have supported basic formatting for a long time, with a `pretty
 standardised`_ command set. This formatting is often used by programs to
