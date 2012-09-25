@@ -6,8 +6,9 @@ core job is to provide an event loop and callback based notifications of I/O
 and other activities.  libuv offers core utilities like timers, non-blocking
 networking support, asynchronous file system access, child processes and more.
 
-libuv强调一种 **异步** ， **事件驱动** 的编程风格。它的内核提供了一个事件循环，以及基于IO和其它活动的通知回调机制。
-libuv还提供了其它一些核心设施，比如，计时器、无阻塞的网络支持、异步的文件系统访问，子进程等等。
+libuv强调 **异步** ， **事件驱动** 的编程风格。它的内核提供了一个事件循环，以及基
+于回调的IO和其它活动的通知机制。除此之外，还有一系列的核心工具集，比如计时器、无
+阻塞的网络支持、异步的文件系统访问，子进程等等。
 
 
 事件循环 Event loops
@@ -18,6 +19,7 @@ and respond to them when they occur. The responsibility of gathering events
 from the operating system or monitoring other sources of events is handled by
 libuv, and the user can register callbacks to be invoked when an event occurs.
 The event-loop usually keeps running *forever*. In pseudocode:
+
 在基于事件的编程中，应用程序将对某些事件的发生表示关注，并在事件发生时做出响应。
 libuv负责从操作系统或者其它被监视的事件源收集事件，而用户则负责注册待事件发生时的
 回调处理函数。事件循环通常是持续运行的（死循环）。用伪码表示如下：
