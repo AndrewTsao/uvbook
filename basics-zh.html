@@ -66,16 +66,17 @@
 core job is to provide an event loop and callback based notifications of I/O
 and other activities.  libuv offers core utilities like timers, non-blocking
 networking support, asynchronous file system access, child processes and more.</p>
-<p>libuv强调一种 <strong>异步</strong> ， <strong>事件驱动</strong> 的编程风格。它的内核提供了一个事件循环，以及基于IO和其它活动的通知回调机制。
-libuv还提供了其它一些核心设施，比如，计时器、无阻塞的网络支持、异步的文件系统访问，子进程等等。</p>
+<p>libuv强调 <strong>异步</strong> ， <strong>事件驱动</strong> 的编程风格。它的内核提供了一个事件循环，以及基
+于回调的IO和其它活动的通知机制。除此之外，还有一系列的核心工具集，比如计时器、无
+阻塞的网络支持、异步的文件系统访问，子进程等等。</p>
 <div class="section" id="event-loops">
 <h2>事件循环 Event loops<a class="headerlink" href="#event-loops" title="Permalink to this headline">¶</a></h2>
 <p>In event-driven programming, an application express interest in certain events
 and respond to them when they occur. The responsibility of gathering events
 from the operating system or monitoring other sources of events is handled by
 libuv, and the user can register callbacks to be invoked when an event occurs.
-The event-loop usually keeps running <em>forever</em>. In pseudocode:
-在基于事件的编程中，应用程序将对某些事件的发生表示关注，并在事件发生时做出响应。
+The event-loop usually keeps running <em>forever</em>. In pseudocode:</p>
+<p>在基于事件的编程中，应用程序将对某些事件的发生表示关注，并在事件发生时做出响应。
 libuv负责从操作系统或者其它被监视的事件源收集事件，而用户则负责注册待事件发生时的
 回调处理函数。事件循环通常是持续运行的（死循环）。用伪码表示如下：</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">while</span> <span class="n">there</span> <span class="n">are</span> <span class="n">still</span> <span class="n">events</span> <span class="n">to</span> <span class="n">process</span><span class="p">:</span>      <span class="c"># 只要仍有事件需要处理就：</span>
