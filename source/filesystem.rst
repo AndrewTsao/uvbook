@@ -44,7 +44,8 @@ File descriptors are closed using
 
 .. code-block:: c
 
-    int uv_fs_close(uv_loop_t* loop, uv_fs_t* req, uv_file file,
+    int uv_fs_close(uv_loop_t* loop, uv_fs_t* req, uv_file file, uv_fs_cb cb)
+
 
 Filesystem operation callbacks have the signature:
 
@@ -134,7 +135,7 @@ same patterns as the read/write/open calls, returning the result in the
 
 .. rubric:: Filesystem operations
 .. literalinclude:: ../libuv/include/uv.h
-    :lines: 1390-1466
+    :lines: 1428-1504
 
 .. _buffers-and-streams:
 
@@ -244,7 +245,7 @@ a command whenever any of the watched files change::
 
 The file change notification is started using ``uv_fs_event_init()``:
 
-.. rubric:: onchange/main.c
+.. rubric:: onchange/main.c - The setup
 .. literalinclude:: ../code/onchange/main.c
     :linenos:
     :lines: 29-32
@@ -254,7 +255,7 @@ The third argument is the actual file or directory to monitor. The last
 argument, ``flags``, can be:
 
 .. literalinclude:: ../libuv/include/uv.h
-    :lines: 1501,1510
+    :lines: 1507-1510
 
 but both are currently unimplemented on all platforms.
 
